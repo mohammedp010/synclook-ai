@@ -17,6 +17,7 @@ from backend.agents.shopping_agent import ShoppingAgent
 from backend.agents.styling_agent import StylingAgent
 from backend.agents.vision_agent import VisionAgent
 from backend.core.logging import get_logger
+from backend.core.tracing import get_tracer
 from backend.services.fashion_knowledge import FashionKnowledgeService
 from backend.services.llm import LLMService
 from backend.services.memory import MemoryService
@@ -93,29 +94,41 @@ class Orchestrator:
             except Exception as exc:
                 logger.warning("memory_load_failed", error=str(exc))
 
-        for agent in self._pipeline:
-            try:
-                ctx = await agent.run(ctx)
-            except Exception as exc:
-                # Vision failure is fatal — can't proceed without attributes
-                if agent.name == "vision":
-                    logger.error(
-                        "orchestrator_fatal",
+        with get_tracer().span(
+            "analysis.pipeline",
+            metadata={"request_id": str(ctx.request_id), "user_id": user_id},
+        ) as root_span:
+            for agent in self._pipeline:
+                try:
+                    ctx = await agent.run(ctx)
+                except Exception as exc:
+                    # Vision failure is fatal — can't proceed without attributes
+                    if agent.name == "vision":
+                        logger.error(
+                            "orchestrator_fatal",
+                            agent=agent.name,
+                            error=str(exc),
+                            request_id=str(ctx.request_id),
+                        )
+                        raise
+
+                    # Downstream failures are non-fatal — return partial results
+                    logger.warning(
+                        "orchestrator_partial",
                         agent=agent.name,
                         error=str(exc),
                         request_id=str(ctx.request_id),
                     )
-                    raise
+                    # Error already recorded in ctx.errors by BaseAgent.run()
+                    break
 
-                # Downstream failures are non-fatal — return partial results
-                logger.warning(
-                    "orchestrator_partial",
-                    agent=agent.name,
-                    error=str(exc),
-                    request_id=str(ctx.request_id),
+            if root_span is not None:
+                root_span.update(
+                    output={
+                        "num_recommendations": len(ctx.recommendations),
+                        "errors": ctx.errors or None,
+                    }
                 )
-                # Error already recorded in ctx.errors by BaseAgent.run()
-                break
 
         elapsed = round(time.perf_counter() - t0, 3)
         ctx.metadata["total_elapsed_s"] = elapsed

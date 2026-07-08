@@ -12,6 +12,7 @@ from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
 from backend.core.config import Settings, get_settings
 from backend.core.exceptions import LLMError
 from backend.core.logging import get_logger
+from backend.core.tracing import get_tracer
 
 logger = get_logger(__name__)
 
@@ -71,17 +72,30 @@ class LLMService:
             raise LLMError("LLM service is disabled (no API key)")
 
         try:
-            response = await self._client.chat.completions.create(
+            with get_tracer().generation(
+                "deepseek.chat",
                 model=self._settings.deepseek_model,
-                messages=[
-                    {"role": "system", "content": _SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=self._settings.llm_temperature,
-                max_tokens=self._settings.llm_max_tokens,
-            )
-            content = response.choices[0].message.content
-            return (content or "").strip()
+                input=user_prompt,
+            ) as generation:
+                response = await self._client.chat.completions.create(
+                    model=self._settings.deepseek_model,
+                    messages=[
+                        {"role": "system", "content": _SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=self._settings.llm_temperature,
+                    max_tokens=self._settings.llm_max_tokens,
+                )
+                content = (response.choices[0].message.content or "").strip()
+                if generation is not None:
+                    usage = getattr(response, "usage", None)
+                    generation.update(
+                        output=content,
+                        usage_details=(
+                            {"input": usage.prompt_tokens, "output": usage.completion_tokens} if usage else None
+                        ),
+                    )
+                return content
         except (APIConnectionError, RateLimitError, APIError) as exc:
             logger.warning("llm_api_error", error=str(exc))
             raise LLMError(f"DeepSeek API error: {exc}") from exc

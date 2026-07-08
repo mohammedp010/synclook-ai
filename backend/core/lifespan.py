@@ -43,5 +43,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         pass
 
+    from backend.core.tracing import get_tracer
+
+    get_tracer().shutdown()
     await close_redis()
     logger.info("app_stopped")

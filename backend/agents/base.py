@@ -10,6 +10,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from backend.core.logging import get_logger
+from backend.core.tracing import get_tracer
 from backend.schemas.clothing import ClothingAttributes
 
 logger = get_logger(__name__)
@@ -79,27 +80,34 @@ class BaseAgent(ABC):
         ...
 
     async def run(self, ctx: AgentContext) -> AgentContext:
-        """Run the agent with state tracking, timing, and error handling."""
+        """Run the agent with state tracking, timing, tracing, and error handling."""
         self.state = AgentState.RUNNING
         logger.info("agent_start", agent=self.name, request_id=str(ctx.request_id))
         t0 = time.perf_counter()
 
-        try:
-            ctx = await self._execute(ctx)
-            self.state = AgentState.DONE
-        except Exception as exc:
-            self.state = AgentState.ERROR
-            ctx.errors.append(f"{self.name}: {exc}")
-            logger.error("agent_error", agent=self.name, error=str(exc))
-            raise
-        finally:
-            elapsed = round(time.perf_counter() - t0, 3)
-            ctx.agent_timings[self.name] = elapsed
-            logger.info(
-                "agent_finish",
-                agent=self.name,
-                state=self.state.value,
-                elapsed_s=elapsed,
-            )
+        with get_tracer().span(
+            f"agent.{self.name}",
+            as_type="agent",
+            metadata={"request_id": str(ctx.request_id)},
+        ) as span:
+            try:
+                ctx = await self._execute(ctx)
+                self.state = AgentState.DONE
+            except Exception as exc:
+                self.state = AgentState.ERROR
+                ctx.errors.append(f"{self.name}: {exc}")
+                logger.error("agent_error", agent=self.name, error=str(exc))
+                raise
+            finally:
+                elapsed = round(time.perf_counter() - t0, 3)
+                ctx.agent_timings[self.name] = elapsed
+                if span is not None:
+                    span.update(output={"state": self.state.value, "elapsed_s": elapsed})
+                logger.info(
+                    "agent_finish",
+                    agent=self.name,
+                    state=self.state.value,
+                    elapsed_s=elapsed,
+                )
 
         return ctx

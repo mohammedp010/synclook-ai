@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     vision_center_crop_ratio: float = 0.85
     vision_enable_caption: bool = False  # BLIP is ~1GB; caption is display-only metadata
 
+    # --- Langfuse (LLM/agent observability) ---
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     # --- SerpAPI (Product Search) ---
     serpapi_api_key: str = ""
     shopping_enabled: bool = True
