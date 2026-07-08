@@ -706,10 +706,29 @@ Executed against the approved upgrade plan (see git history from `Initial commit
 - Explanations are now **evidence-grounded**: each recommendation carries `evidence` (rule facts); the LLM words the explanation from those facts only (tone-refinement prompts deleted)
 - Verified: same image with "office" vs "gym" intent produces different outfits; seeded policy violations are caught and rebuilt; 221 tests + eval gate green
 
-### ⬜ Phase 3: pgvector + embedding product reranking + digital wardrobe
-### ⬜ Phase 4: LLM-as-judge metrics + observability dashboard + multi-garment vision
-### ⬜ Phase 5: Trend RAG + virtual try-on MVP + auth hardening
-### ⬜ Phase 6: README/ADRs/frontend intent & wardrobe UI
+### ✅ Phase 3: Embedding product reranking + digital wardrobe
+- Product matching rebuilt on **zero-shot CLIP gates**: titles classified against the same catalog heads as the vision pipeline (type/color/gender must agree), survivors ranked by spec similarity + thumbnail image similarity (Redis-cached)
+- Measured on 53 labeled products: **F1 0.893 vs keyword baseline 0.839** (precision 0.862 vs 0.743); honest finding recorded: naive spec-vs-title cosine alone scored *worse* than keywords (0.81)
+- **Digital wardrobe**: garment uploads auto-tagged + embedded; tag-gated, embedding-ranked matching marks recommendation items `owned` (with `wardrobe_item_id`) so shopping only covers missing pieces; CRUD under `/api/v1/wardrobe/items` with manual tag correction
+- **Deliberately no vector DB** (see `docs/adr/002`): per-request reranking is in-memory; wardrobe scale makes brute-force cosine the right call; pgvector documented as the scale-up
+- Fresh-database schema fixed: backfill migration for analysis/feedback tables (original initial migration was empty), session rollback on persist failure
+- Verified end-to-end on a live server: upload → tag correction → analysis marks owned items, live DeepSeek grounded explanations
+
+### ✅ Phase 4: LLM-as-judge + admin metrics (multi-garment vision deferred)
+- `evaluation/llm_judge.py`: calibration-gated judge (must separate hand-crafted good/bad pairs before scores count) for **explanation faithfulness** and **intent adherence**
+- First judged run caught a real grounding bug — occasion cited in explanations but absent from evidence; fix measured: **faithfulness 0.5 → 1.0**
+- `MetricsService` + `GET /api/v1/admin/metrics`: analyses (avg confidence, low-confidence rate), feedback like-rate, wardrobe size, eval-run history — verified live
+- Multi-garment vision (OWLv2 detection) deferred: single-garment path degrades safely via confidence gating; tracked as follow-up
+
+### 🟨 Phase 5: Trend RAG + virtual try-on MVP + auth hardening — pending
+- Try-on requires a hosted diffusion API decision + key (fal.ai / Replicate, ~$0.03-0.10/image) — **user decision needed**
+- Langfuse tracing is wired but needs cloud keys (free tier) to see real traces — **user signup needed**
+- Auth hardening + trend RAG are unblocked next steps
+
+### 🟨 Phase 6: Portfolio packaging — README + ADRs done; frontend pending
+- README rewritten: architecture (mermaid), measured before/after table, honest findings, run instructions
+- ADRs in `docs/adr/`: 001 LangGraph, 002 no-vector-DB-yet, 003 LLM-proposes-rules-verify, 004 model choices
+- Frontend work pending: `user_intent` text input, wardrobe screens, evidence viewer; **GitHub publish blocked on `gh` auth**
 
 ---
 
@@ -753,4 +772,4 @@ Executed against the approved upgrade plan (see git history from `Initial commit
 
 ---
 
-*Last updated: 9 July 2026 — Portfolio upgrade Phases 0-2 complete (LangGraph pipeline, intent, verifier, evals, tracing; `221 passed`, eval gate green).*
+*Last updated: 9 July 2026 — Phases 0-4 complete + README/ADRs (`226 passed`, eval gate green, strict mypy clean). Next: frontend intent/wardrobe UI, auth, trend RAG, try-on decision.*
