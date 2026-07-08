@@ -170,6 +170,10 @@ class LLMService:
 
     # ── Public API ────────────────────────────────────────────────────
 
+    async def structured[T: BaseModel](self, schema: type[T], *, system_prompt: str, user_prompt: str) -> T:
+        """Public structured-output call for callers with their own prompts (e.g. eval judges)."""
+        return await self._structured_call(schema, system_prompt, user_prompt)
+
     async def extract_intent(self, user_text: str) -> StyleIntent:
         """Parse a free-text styling request into a validated StyleIntent."""
         result = await self._structured_call(

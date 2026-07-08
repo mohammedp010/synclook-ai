@@ -11,6 +11,7 @@ from backend.services.fashion_knowledge import FashionKnowledgeService
 from backend.services.feedback import FeedbackService
 from backend.services.llm import LLMService
 from backend.services.memory import MemoryService
+from backend.services.metrics import MetricsService
 from backend.services.product_search import ProductSearchService
 from backend.services.vision import VisionService
 from backend.services.wardrobe import WardrobeService
@@ -96,3 +97,9 @@ def get_feedback_service() -> FeedbackService:
 def get_wardrobe_service() -> WardrobeService:
     """Singleton WardrobeService — digital closet CRUD + matching."""
     return WardrobeService(get_vision_service())
+
+
+@lru_cache
+def get_metrics_service() -> MetricsService:
+    """Singleton MetricsService — read-only quality/usage aggregates."""
+    return MetricsService()

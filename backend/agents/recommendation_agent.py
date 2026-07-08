@@ -253,10 +253,18 @@ class RecommendationAgent(BaseAgent):
         if self._llm is None or not self._llm.enabled:
             return rec
 
+        # The occasion is a legitimate grounding fact — record it in the
+        # evidence so explanation claims about it are supported, not invented.
+        occasion = intent.occasion if intent else None
+        if occasion:
+            occasion_fact = f"User occasion: {occasion}"
+            if occasion_fact not in rec.evidence:
+                rec.evidence.append(occasion_fact)
+
         try:
             rec.overall_explanation = await self._llm.generate_grounded_explanation(
                 facts=rec.evidence,
-                occasion=intent.occasion if intent else None,
+                occasion=occasion,
             )
         except LLMError as exc:
             logger.warning("llm_explanation_failed", error=str(exc))
