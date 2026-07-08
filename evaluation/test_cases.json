@@ -9,9 +9,24 @@
       "confidence": 0.82,
       "gender": "male"
     },
-    "expected": ["shirt", "t-shirt", "hoodie", "shoes", "accessory"],
-    "forbidden": ["blouse", "skirt", "dress"],
-    "expected_categories": ["topwear", "footwear", "accessory"]
+    "expected": [
+      "shirt",
+      "t-shirt",
+      "hoodie",
+      "shoes",
+      "accessory"
+    ],
+    "forbidden": [
+      "blouse",
+      "skirt",
+      "dress"
+    ],
+    "expected_categories": [
+      "topwear",
+      "footwear",
+      "accessory"
+    ],
+    "kind": "golden"
   },
   {
     "name": "black_trousers_male_formal",
@@ -23,9 +38,24 @@
       "confidence": 0.9,
       "gender": "male"
     },
-    "expected": ["shirt", "blazer", "shoes", "accessory"],
-    "forbidden": ["blouse", "skirt", "dress"],
-    "expected_categories": ["topwear", "outerwear", "footwear", "accessory"]
+    "expected": [
+      "shirt",
+      "blazer",
+      "shoes",
+      "accessory"
+    ],
+    "forbidden": [
+      "blouse",
+      "skirt",
+      "dress"
+    ],
+    "expected_categories": [
+      "topwear",
+      "outerwear",
+      "footwear",
+      "accessory"
+    ],
+    "kind": "golden"
   },
   {
     "name": "navy_shirt_unisex_smart_casual",
@@ -37,8 +67,1484 @@
       "confidence": 0.88,
       "gender": "unisex"
     },
-    "expected": ["trousers", "chinos", "jeans", "shoes", "accessory"],
-    "forbidden": ["dress", "skirt"],
-    "expected_categories": ["bottomwear", "footwear", "accessory"]
+    "expected": [
+      "trousers",
+      "chinos",
+      "jeans",
+      "shoes",
+      "accessory"
+    ],
+    "forbidden": [
+      "dress",
+      "skirt"
+    ],
+    "expected_categories": [
+      "bottomwear",
+      "footwear",
+      "accessory"
+    ],
+    "kind": "golden"
+  },
+  {
+    "name": "black_t-shirt_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "white_t-shirt_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_t-shirt_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "navy",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_t-shirt_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "grey_t-shirt_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "grey",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_t-shirt_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "t-shirt",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_shirt_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "olive",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "brown_shirt_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_shirt_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "red",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_shirt_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "black_shirt_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "black",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_shirt_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_blouse_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "navy",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "blue_blouse_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_blouse_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "grey",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_blouse_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "olive_blouse_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "olive",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_blouse_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blouse",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_jacket_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "red",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "green_jacket_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_jacket_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "black",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_jacket_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "navy_jacket_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "navy",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_jacket_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jacket",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_blazer_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "grey",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "beige_blazer_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_blazer_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "olive",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_blazer_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "red_blazer_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "red",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_blazer_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "blazer",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_coat_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "white_coat_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_coat_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "navy",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_coat_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "grey_coat_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "grey",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_coat_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "coat",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_sweater_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "olive",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "brown_sweater_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_sweater_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "red",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_sweater_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "black_sweater_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "black",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_sweater_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "sweater",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_hoodie_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "navy",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "blue_hoodie_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_hoodie_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "grey",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_hoodie_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "olive_hoodie_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "olive",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_hoodie_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "hoodie",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_dress_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "red",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "green_dress_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_dress_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "black",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_dress_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "navy_dress_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "navy",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_dress_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "dress",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_skirt_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "grey",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "beige_skirt_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_skirt_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "olive",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_skirt_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "red_skirt_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "red",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_skirt_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "skirt",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_trousers_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "white_trousers_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_trousers_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "navy",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_trousers_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "grey_trousers_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "grey",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_trousers_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_jeans_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "olive",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "brown_jeans_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_jeans_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "red",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_jeans_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "black_jeans_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "black",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_jeans_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "jeans",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_shorts_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "navy",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "blue_shorts_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_shorts_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "grey",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_shorts_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "olive_shorts_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "olive",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_shorts_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shorts",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_chinos_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "red",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "green_chinos_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_chinos_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "black",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_chinos_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "navy_chinos_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "navy",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_chinos_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "chinos",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "grey_suit_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "grey",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "beige_suit_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_suit_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "olive",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "brown_suit_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "red_suit_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "red",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_suit_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "suit",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "black_shoes_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.35,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "white_shoes_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.75,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "navy_shoes_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "navy",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.85,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "blue_shoes_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "blue",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.9,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "grey_shoes_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "grey",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.35,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "beige_shoes_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "shoes",
+      "primary_color": "beige",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.75,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "olive_accessory_menswear_formal",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "olive",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.85,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "brown_accessory_womenswear_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "brown",
+      "pattern": "solid",
+      "style": "casual",
+      "confidence": 0.9,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "red_accessory_unisex_smart_casual",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "red",
+      "pattern": "striped",
+      "style": "smart_casual",
+      "confidence": 0.35,
+      "gender": "unisex"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "green_accessory_menswear_streetwear",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "green",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.75,
+      "gender": "menswear"
+    },
+    "forbidden": [
+      "blouse",
+      "dress",
+      "skirt"
+    ]
+  },
+  {
+    "name": "black_accessory_womenswear_sporty",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "black",
+      "pattern": "checkered",
+      "style": "sporty",
+      "confidence": 0.85,
+      "gender": "womenswear"
+    },
+    "forbidden": []
+  },
+  {
+    "name": "white_accessory_unisex_minimalist",
+    "kind": "generated",
+    "input": {
+      "clothing_type": "accessory",
+      "primary_color": "white",
+      "pattern": "solid",
+      "style": "minimalist",
+      "confidence": 0.9,
+      "gender": "unisex"
+    },
+    "forbidden": []
   }
 ]

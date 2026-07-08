@@ -40,3 +40,9 @@ jobs:
 
       - name: Tests
         run: poetry run python -m pytest tests/ -q
+
+      - name: Evaluation gate (recommendation quality)
+        run: poetry run python evaluation/harness.py --check
+
+      - name: Evaluation report (product relevance baseline)
+        run: poetry run python evaluation/product_relevance.py

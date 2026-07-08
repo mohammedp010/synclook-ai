@@ -1,0 +1,115 @@
+[
+  {
+    "name": "menswear_navy_shirt_formal",
+    "desired": {"item_type": "shirt", "color": "navy", "style": "formal", "shopping_intent": "menswear"},
+    "products": [
+      {"title": "Navy Blue Slim Fit Formal Shirt for Men", "price": "₹1,299", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Men's Dark Blue Cotton Formal Shirt", "price": "₹999", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Women's Navy Blouse Elegant Office Wear", "price": "₹899", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Navy Formal Trousers Slim Fit", "price": "₹1,499", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Classic Navy Shirt", "price": "₹1,099", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Navy Blue Silk Saree with Blouse Piece", "price": "₹2,499", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "unisex_black_tshirt_streetwear",
+    "desired": {"item_type": "t-shirt", "color": "black", "style": "streetwear", "shopping_intent": "unisex"},
+    "products": [
+      {"title": "Black Oversized Graphic Tee Streetwear", "price": "₹799", "source": "Bewakoof", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Unisex Black Cotton T-Shirt Regular Fit", "price": "₹499", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Black Hoodie Heavyweight Street Style", "price": "₹1,599", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Charcoal Tshirt Half Sleeve", "price": "₹599", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Black Street Tee Printed", "price": "₹699", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Pack of 3 Black Socks Cotton", "price": "₹299", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "menswear_grey_trousers_smart_casual",
+    "desired": {"item_type": "trousers", "color": "grey", "style": "smart_casual", "shopping_intent": "menswear"},
+    "products": [
+      {"title": "Men's Gray Slim Fit Trousers Smart Casual", "price": "₹1,399", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Grey Formal Pants for Men Stretchable", "price": "₹1,199", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Women's Grey Palazzo Pants Wide Leg", "price": "₹899", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Grey Chinos Men Casual", "price": "₹1,299", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Charcoal Grey Trousers Tapered", "price": "₹1,599", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Grey Denim Jeans Slim", "price": "₹1,099", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "womenswear_white_blouse_formal",
+    "desired": {"item_type": "blouse", "color": "white", "style": "formal", "shopping_intent": "womenswear"},
+    "products": [
+      {"title": "White Formal Blouse Women Office Wear", "price": "₹999", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Women's Ivory Blouse Long Sleeve", "price": "₹1,199", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "White Blouse Elegant Work", "price": "₹899", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Men's White Formal Shirt", "price": "₹1,099", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "White Crop Top Party Wear", "price": "₹699", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "unisex_blue_jeans_casual",
+    "desired": {"item_type": "jeans", "color": "blue", "style": "casual", "shopping_intent": "unisex"},
+    "products": [
+      {"title": "Blue Denim Jeans Regular Fit", "price": "₹1,299", "source": "Levis", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Light Blue Washed Jeans Casual", "price": "₹1,499", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Blue Denim Jacket Casual", "price": "₹1,899", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Navy Chinos Casual Stretch", "price": "₹1,199", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Blue Jeans Slim Tapered", "price": "", "source": "Myntra", "thumbnail": "", "relevant": true}
+    ]
+  },
+  {
+    "name": "menswear_brown_shoes_formal",
+    "desired": {"item_type": "shoes", "color": "brown", "style": "formal", "shopping_intent": "menswear"},
+    "products": [
+      {"title": "Brown Leather Formal Shoes Men Oxford", "price": "₹2,499", "source": "Bata", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Men's Tan Loafers Formal", "price": "₹1,999", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Brown Derby Shoes Office Wear", "price": "₹2,199", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Brown Leather Belt Formal Men", "price": "₹699", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "White Sneakers Casual Men", "price": "₹1,499", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "unisex_black_accessory_minimalist",
+    "desired": {"item_type": "accessory", "color": "black", "style": "minimalist", "shopping_intent": "unisex"},
+    "products": [
+      {"title": "Black Leather Belt Minimal Buckle", "price": "₹599", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Minimalist Black Watch Analog", "price": "₹1,999", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Black Crossbody Bag Sleek", "price": "₹1,299", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Black T-Shirt Plain Minimal", "price": "₹499", "source": "Bewakoof", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Black Formal Shoes Men", "price": "₹2,099", "source": "Bata", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  },
+  {
+    "name": "menswear_olive_chinos_casual",
+    "desired": {"item_type": "chinos", "color": "olive", "style": "casual", "shopping_intent": "menswear"},
+    "products": [
+      {"title": "Olive Green Chinos Men Slim Fit", "price": "₹1,399", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Men's Olive Chino Pants Stretch", "price": "₹1,299", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Olive Cargo Pants Utility", "price": "₹1,599", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Khaki Chinos Regular", "price": "₹1,199", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Olive Green Chinos Tapered Men", "price": "₹1,499", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true}
+    ]
+  },
+  {
+    "name": "womenswear_beige_skirt_smart_casual",
+    "desired": {"item_type": "skirt", "color": "beige", "style": "smart_casual", "shopping_intent": "womenswear"},
+    "products": [
+      {"title": "Beige A-Line Skirt Women Office", "price": "₹999", "source": "Myntra", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Women's Beige Pleated Midi Skirt", "price": "₹1,199", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Beige Wide Leg Trousers Women", "price": "₹1,299", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Cream Skirt Flowy Long", "price": "₹899", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Beige Skirt Knee Length Work Wear", "price": "₹1,099", "source": "Ajio", "thumbnail": "t.jpg", "relevant": true}
+    ]
+  },
+  {
+    "name": "menswear_black_hoodie_streetwear",
+    "desired": {"item_type": "hoodie", "color": "black", "style": "streetwear", "shopping_intent": "menswear"},
+    "products": [
+      {"title": "Black Oversized Hoodie Men Street", "price": "₹1,499", "source": "Bewakoof", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Men's Black Hooded Sweatshirt Heavy", "price": "₹1,699", "source": "Amazon.in", "thumbnail": "t.jpg", "relevant": true},
+      {"title": "Black Sweatshirt Crew Neck (No Hood)", "price": "₹1,299", "source": "Myntra", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Black Zip Jacket Windcheater", "price": "₹1,899", "source": "Decathlon", "thumbnail": "t.jpg", "relevant": false},
+      {"title": "Women's Black Cropped Hoodie", "price": "₹1,399", "source": "Ajio", "thumbnail": "t.jpg", "relevant": false}
+    ]
+  }
+]
