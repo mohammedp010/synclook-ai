@@ -13,6 +13,7 @@ from backend.services.llm import LLMService
 from backend.services.memory import MemoryService
 from backend.services.product_search import ProductSearchService
 from backend.services.vision import VisionService
+from backend.services.wardrobe import WardrobeService
 from backend.tools.product_search import ProductSearchTool
 
 
@@ -89,3 +90,9 @@ async def get_orchestrator() -> Orchestrator:
 def get_feedback_service() -> FeedbackService:
     """Singleton FeedbackService — feedback persistence + memory updates."""
     return FeedbackService(get_memory_service())
+
+
+@lru_cache
+def get_wardrobe_service() -> WardrobeService:
+    """Singleton WardrobeService — digital closet CRUD + matching."""
+    return WardrobeService(get_vision_service())

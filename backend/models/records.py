@@ -39,6 +39,28 @@ class FeedbackRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class WardrobeItem(Base):
+    """A garment the user owns, auto-tagged by the vision pipeline.
+
+    ``embedding`` stores the normalized CLIP image embedding as JSON. At
+    personal-wardrobe scale (hundreds of items) brute-force cosine in Python
+    is faster than a network round-trip; if wardrobes ever grow to catalog
+    scale, the migration path is a pgvector column + HNSW index.
+    """
+
+    __tablename__ = "wardrobe_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    label: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    clothing_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    color: Mapped[str] = mapped_column(String(32), nullable=False)
+    pattern: Mapped[str] = mapped_column(String(32), nullable=False, default="solid")
+    style: Mapped[str] = mapped_column(String(32), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class EvaluationRun(Base):
     """One execution of the evaluation harness, for tracking metrics over time."""
 

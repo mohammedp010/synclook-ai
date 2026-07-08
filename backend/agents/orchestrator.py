@@ -20,6 +20,7 @@ from backend.agents.shopping_agent import ShoppingAgent
 from backend.agents.styling_agent import StylingAgent
 from backend.agents.verifier_agent import VerifierAgent
 from backend.agents.vision_agent import VisionAgent
+from backend.agents.wardrobe_agent import WardrobeAgent
 from backend.core.logging import get_logger
 from backend.core.tracing import get_tracer
 from backend.graph import AnalysisGraph
@@ -27,6 +28,7 @@ from backend.services.fashion_knowledge import FashionKnowledgeService
 from backend.services.llm import LLMService
 from backend.services.memory import MemoryService
 from backend.services.vision import VisionService
+from backend.services.wardrobe import WardrobeService
 from backend.tools.product_search import ProductSearchTool
 
 logger = get_logger(__name__)
@@ -36,6 +38,7 @@ _AGENT_LABELS = {
     "vision": "Analyzing image...",
     "styling": "Generating style matches...",
     "recommendation": "Building recommendations...",
+    "wardrobe": "Checking your wardrobe...",
     "shopping": "Finding products online...",
     "verifier": "Quality-checking recommendations...",
 }
@@ -65,6 +68,7 @@ class Orchestrator:
             vision_agent=VisionAgent(vision_service),
             styling_agent=StylingAgent(fashion_knowledge=knowledge),
             recommendation_agent=RecommendationAgent(llm_service=llm_service, fashion_knowledge=knowledge),
+            wardrobe_agent=WardrobeAgent(WardrobeService(vision_service)),
             shopping_agent=ShoppingAgent(product_tool=product_tool),
             verifier_agent=VerifierAgent(llm_service=llm_service),
             has_product_tool=product_tool is not None,

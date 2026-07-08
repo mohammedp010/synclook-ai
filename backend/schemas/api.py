@@ -58,7 +58,11 @@ class RecommendationItem(BaseModel):
     reason: str = Field(description="Why this item was recommended")
     owned: bool = Field(
         default=False,
-        description="True when the user said they already own this item; shopping is skipped for it",
+        description="True when the user already owns this item; shopping is skipped for it",
+    )
+    wardrobe_item_id: str | None = Field(
+        default=None,
+        description="ID of the matching wardrobe item when this piece can be worn from the user's closet",
     )
     products: list[ProductLink] = Field(
         default_factory=list,

@@ -8,6 +8,7 @@ from backend.agents.shopping_agent import ShoppingAgent
 from backend.agents.styling_agent import StylingAgent
 from backend.agents.verifier_agent import VerifierAgent
 from backend.agents.vision_agent import VisionAgent
+from backend.agents.wardrobe_agent import WardrobeAgent
 
 __all__ = [
     "AgentContext",
@@ -21,4 +22,5 @@ __all__ = [
     "StylingAgent",
     "VerifierAgent",
     "VisionAgent",
+    "WardrobeAgent",
 ]

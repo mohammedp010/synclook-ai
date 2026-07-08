@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from backend.api.routes import analysis, feedback, health, stream
+from backend.api.routes import analysis, feedback, health, stream, wardrobe
 from backend.core.config import get_settings
 from backend.core.lifespan import lifespan
 from backend.core.rate_limit import limiter
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
 
     # --- Routes ---
     app.include_router(health.router, prefix=settings.api_prefix, tags=["health"])
+    app.include_router(wardrobe.router, prefix=settings.api_prefix, tags=["wardrobe"])
     app.include_router(analysis.router, prefix=settings.api_prefix, tags=["analysis"])
     app.include_router(feedback.router, prefix=settings.api_prefix, tags=["feedback"])
     app.include_router(stream.router, prefix=settings.api_prefix, tags=["streaming"])

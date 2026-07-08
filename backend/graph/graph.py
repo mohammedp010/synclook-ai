@@ -2,13 +2,15 @@
 
 Graph topology::
 
-    START → intent → vision → styling → recommendation ─┬→ shopping ─┐
-                                              ▲          │            ├→ verifier ─┬→ END
-                                              │          └────────────┘            │
-                                              └───── fixable issues, 1 retry ──────┘
+    START → intent → vision → styling → recommendation → [wardrobe] ─┬→ [shopping] ─┐
+                                              ▲                       │              ├→ verifier ─┬→ END
+                                              │                       └──────────────┘            │
+                                              └────────────── fixable issues, 1 retry ────────────┘
 
 Routing is decided per request:
 
+- wardrobe runs only for identified users (it needs a closet to search);
+  failures are swallowed — it is an enhancement, not a dependency
 - shopping is skipped when the client disabled products, the parsed intent
   says the user doesn't want shopping, or no product tool is configured
 - the verifier can send the flow back to recommendation exactly once when it
@@ -23,6 +25,7 @@ dependency).
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -60,6 +63,7 @@ class AnalysisGraph:
         vision_agent: BaseAgent,
         styling_agent: BaseAgent,
         recommendation_agent: BaseAgent,
+        wardrobe_agent: BaseAgent | None,
         shopping_agent: BaseAgent,
         verifier_agent: BaseAgent,
         has_product_tool: bool,
@@ -68,6 +72,7 @@ class AnalysisGraph:
         self._vision = vision_agent
         self._styling = styling_agent
         self._recommendation = recommendation_agent
+        self._wardrobe = wardrobe_agent
         self._shopping = shopping_agent
         self._verifier = verifier_agent
         self._has_product_tool = has_product_tool
@@ -104,6 +109,15 @@ class AnalysisGraph:
         if state["verify_attempts"] > 0:
             self._apply_verifier_fixes(ctx)
         return await self._run_non_fatal(self._recommendation, state)
+
+    async def _wardrobe_node(self, state: PipelineState) -> dict[str, Any]:
+        assert self._wardrobe is not None
+        try:
+            ctx = await self._wardrobe.run(state["ctx"])
+        except Exception as exc:  # closet unavailable — recommendations stand
+            logger.warning("wardrobe_node_failed", error=str(exc))
+            return {"ctx": state["ctx"]}
+        return {"ctx": ctx}
 
     async def _shopping_node(self, state: PipelineState) -> dict[str, Any]:
         return await self._run_non_fatal(self._shopping, state)
@@ -145,15 +159,23 @@ class AnalysisGraph:
     def _after_styling(self, state: PipelineState) -> str:
         return END if state["pipeline_failed"] else "recommendation"
 
-    def _after_recommendation(self, state: PipelineState) -> str:
-        if state["pipeline_failed"]:
-            return END
+    def _shopping_or_verifier(self, state: PipelineState) -> str:
         ctx = state["ctx"]
         intent = intent_from_context(ctx)
         wants_shopping = intent.wants_shopping if intent else True
         if ctx.include_products and wants_shopping and self._has_product_tool:
             return "shopping"
         return "verifier"
+
+    def _after_recommendation(self, state: PipelineState) -> str:
+        if state["pipeline_failed"]:
+            return END
+        if self._wardrobe is not None and state["ctx"].user_id:
+            return "wardrobe"
+        return self._shopping_or_verifier(state)
+
+    def _after_wardrobe(self, state: PipelineState) -> str:
+        return self._shopping_or_verifier(state)
 
     def _after_shopping(self, state: PipelineState) -> str:
         return END if state["pipeline_failed"] else "verifier"
@@ -174,6 +196,8 @@ class AnalysisGraph:
         graph.add_node("vision", self._vision_node)
         graph.add_node("styling", self._styling_node)
         graph.add_node("recommendation", self._recommendation_node)
+        if self._wardrobe is not None:
+            graph.add_node("wardrobe", self._wardrobe_node)
         graph.add_node("shopping", self._shopping_node)
         graph.add_node("verifier", self._verifier_node)
 
@@ -181,11 +205,13 @@ class AnalysisGraph:
         graph.add_edge("intent", "vision")
         graph.add_edge("vision", "styling")
         graph.add_conditional_edges("styling", self._after_styling, {"recommendation": "recommendation", END: END})
-        graph.add_conditional_edges(
-            "recommendation",
-            self._after_recommendation,
-            {"shopping": "shopping", "verifier": "verifier", END: END},
-        )
+        recommendation_targets: dict[Hashable, str] = {"shopping": "shopping", "verifier": "verifier", END: END}
+        if self._wardrobe is not None:
+            recommendation_targets["wardrobe"] = "wardrobe"
+            graph.add_conditional_edges(
+                "wardrobe", self._after_wardrobe, {"shopping": "shopping", "verifier": "verifier"}
+            )
+        graph.add_conditional_edges("recommendation", self._after_recommendation, recommendation_targets)
         graph.add_conditional_edges("shopping", self._after_shopping, {"verifier": "verifier", END: END})
         graph.add_conditional_edges("verifier", self._after_verifier, {"recommendation": "recommendation", END: END})
         return graph.compile()

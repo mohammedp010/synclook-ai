@@ -6,13 +6,11 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from alembic import context
-
-from backend.core.config import get_settings
-from backend.db.base import Base
-
 # Import all models so Alembic can detect them for autogenerate
 import backend.models.records  # noqa: F401
+from alembic import context
+from backend.core.config import get_settings
+from backend.db.base import Base
 
 # Alembic Config object
 config = context.config
