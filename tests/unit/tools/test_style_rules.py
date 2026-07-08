@@ -1,12 +1,8 @@
 """Unit tests for StyleRuleEngineTool."""
 
-import pytest
-
 from backend.schemas.clothing import ClothingType, Pattern, Style
 from backend.tools.style_rules import (
     ITEM_PAIRINGS,
-    PATTERN_PAIRS,
-    STYLE_COMPATIBILITY,
     StyleRuleEngineTool,
 )
 

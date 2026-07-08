@@ -1,7 +1,5 @@
 """Unit tests for ColorMatcherTool."""
 
-import pytest
-
 from backend.schemas.clothing import Color
 from backend.tools.color_matcher import COLOR_COMPLEMENTS, ColorMatcherTool
 

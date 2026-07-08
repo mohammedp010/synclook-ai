@@ -35,7 +35,9 @@ class TestStylingAgent:
         for match in result.style_matches:
             assert match.item_type in expected_types
 
-    async def test_match_colors_come_from_complement_table(self, agent: StylingAgent, sample_context: AgentContext) -> None:
+    async def test_match_colors_come_from_complement_table(
+        self, agent: StylingAgent, sample_context: AgentContext
+    ) -> None:
         result = await agent.run(sample_context)
         attrs = sample_context.clothing_attributes
         expected_colors = [c.value for c in COLOR_COMPLEMENTS[attrs.primary_color]]

@@ -7,6 +7,7 @@ in real time.
 
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -64,7 +65,9 @@ class FeedbackService:
         # 2. Feed into memory system if user is identified
         if user_id:
             colors, styles = await self._extract_recommendation_context(
-                db, request_id=request_id, recommendation_id=recommendation_id,
+                db,
+                request_id=request_id,
+                recommendation_id=recommendation_id,
             )
             if colors or styles:
                 try:
@@ -119,8 +122,8 @@ class FeedbackService:
         request_id: UUID,
         user_id: str | None,
         image_path: str,
-        detected_attributes: dict,
-        recommendations: list,
+        detected_attributes: dict[str, Any],
+        recommendations: list[Any],
     ) -> AnalysisRecord:
         """Persist an analysis result to PostgreSQL."""
         # Serialize recommendations (Pydantic models → dicts)

@@ -12,7 +12,8 @@ downstream agents can boost recommendations matching user history.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 import redis.asyncio as aioredis
 
@@ -47,7 +48,7 @@ class UserPreferences:
         self.liked_styles = liked_styles or []
         self.disliked_styles = disliked_styles or []
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, list[str]]:
         return {
             "liked_colors": self.liked_colors,
             "disliked_colors": self.disliked_colors,
@@ -56,7 +57,7 @@ class UserPreferences:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> UserPreferences:
+    def from_dict(cls, data: dict[str, Any]) -> UserPreferences:
         return cls(
             liked_colors=data.get("liked_colors", []),
             disliked_colors=data.get("disliked_colors", []),
@@ -155,20 +156,22 @@ class MemoryService:
         """Append an analysis result to the user's history (capped at MAX_HISTORY)."""
         r = await self._get_redis()
         key = _HISTORY_KEY.format(user_id=user_id)
-        entry = json.dumps({
-            "clothing_type": clothing_type,
-            "color": color,
-            "style": style,
-            "pattern": pattern,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
-        await r.lpush(key, entry)
-        await r.ltrim(key, 0, MAX_HISTORY - 1)
+        entry = json.dumps(
+            {
+                "clothing_type": clothing_type,
+                "color": color,
+                "style": style,
+                "pattern": pattern,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
+        await r.lpush(key, entry)  # type: ignore[misc]  # redis-py sync/async union typing
+        await r.ltrim(key, 0, MAX_HISTORY - 1)  # type: ignore[misc]
         await r.expire(key, self._settings.redis_ttl_seconds)
 
-    async def get_history(self, user_id: str) -> list[dict]:
+    async def get_history(self, user_id: str) -> list[dict[str, Any]]:
         """Return the user's recent analysis history (newest first)."""
         r = await self._get_redis()
         key = _HISTORY_KEY.format(user_id=user_id)
-        items = await r.lrange(key, 0, MAX_HISTORY - 1)
+        items = await r.lrange(key, 0, MAX_HISTORY - 1)  # type: ignore[misc]
         return [json.loads(item) for item in items]

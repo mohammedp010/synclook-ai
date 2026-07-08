@@ -1,5 +1,7 @@
 """SSE streaming endpoint for real-time analysis progress."""
 
+from collections.abc import AsyncGenerator
+
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sse_starlette.sse import EventSourceResponse
 
@@ -33,16 +35,11 @@ async def analyze_clothing_stream(
     settings = get_settings()
 
     if image.content_type not in settings.allowed_image_types:
-        raise_bad_request(
-            f"Unsupported image type '{image.content_type}'. "
-            f"Allowed: {settings.allowed_image_types}"
-        )
+        raise_bad_request(f"Unsupported image type '{image.content_type}'. Allowed: {settings.allowed_image_types}")
 
     contents = await image.read()
     if len(contents) > settings.max_upload_size_bytes:
-        raise_bad_request(
-            f"Image exceeds maximum size of {settings.max_upload_size_mb} MB"
-        )
+        raise_bad_request(f"Image exceeds maximum size of {settings.max_upload_size_mb} MB")
 
     logger.info(
         "stream_analysis_requested",
@@ -51,7 +48,7 @@ async def analyze_clothing_stream(
         size_bytes=len(contents),
     )
 
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[dict[str, str], None]:
         async for event in orchestrator.run_stream(
             contents,
             user_id=user_id,

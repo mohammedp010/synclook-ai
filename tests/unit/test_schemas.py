@@ -1,23 +1,23 @@
 """Unit tests for schemas."""
 
-import pytest
 from uuid import UUID
 
-from backend.schemas.clothing import (
-    ClothingAttributes,
-    ClothingType,
-    Color,
-    Pattern,
-    Style,
-)
+import pytest
+
 from backend.schemas.api import (
-    AnalysisResponse,
     FeedbackRequest,
     FeedbackResponse,
     FeedbackType,
     HealthResponse,
     Recommendation,
     RecommendationItem,
+)
+from backend.schemas.clothing import (
+    ClothingAttributes,
+    ClothingType,
+    Color,
+    Pattern,
+    Style,
 )
 
 

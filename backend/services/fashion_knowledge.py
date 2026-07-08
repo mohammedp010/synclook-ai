@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.schemas.clothing import ClothingType
@@ -50,7 +51,7 @@ class FashionKnowledgeService:
                 return ct
         return None
 
-    def _load_knowledge(self) -> dict:
+    def _load_knowledge(self) -> dict[str, Any]:
         try:
             raw = self._knowledge_path.read_text(encoding="utf-8")
             data = json.loads(raw)
@@ -65,7 +66,7 @@ class FashionKnowledgeService:
             logger.warning("fashion_knowledge_json_error", error=str(exc))
             return {}
 
-    def _entry(self, item_type: ClothingType | str) -> dict:
+    def _entry(self, item_type: ClothingType | str) -> dict[str, Any]:
         if isinstance(item_type, ClothingType):
             key = item_type.value
         else:

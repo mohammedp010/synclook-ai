@@ -52,10 +52,14 @@ python_functions = "test_*"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+# UP042 (str,Enum -> StrEnum) changes str() semantics of enum members; the
+# clothing enums are serialized via .value everywhere, so the rewrite adds
+# risk without benefit.
+ignore = ["UP042"]
 
 [tool.mypy]
 python_version = "3.12"

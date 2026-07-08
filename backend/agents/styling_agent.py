@@ -101,7 +101,9 @@ class StylingAgent(BaseAgent):
                 continue
 
             score = self.style_tool.compute_match_score(
-                attrs.style, attrs.style, attrs.pattern,
+                attrs.style,
+                attrs.style,
+                attrs.pattern,
             )
 
             colors_for_item = [c.value for c in complement_colors[:4]]

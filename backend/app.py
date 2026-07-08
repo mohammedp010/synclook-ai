@@ -5,10 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+from backend.api.routes import analysis, feedback, health, stream
 from backend.core.config import get_settings
 from backend.core.lifespan import lifespan
 from backend.core.rate_limit import limiter
-from backend.api.routes import health, analysis, feedback, stream
 
 
 def create_app() -> FastAPI:
@@ -34,7 +34,8 @@ def create_app() -> FastAPI:
 
     # --- Rate Limiting ---
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    # slowapi's handler is typed narrower than Starlette's handler protocol.
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
     # --- Routes ---
     app.include_router(health.router, prefix=settings.api_prefix, tags=["health"])

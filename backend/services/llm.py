@@ -7,7 +7,7 @@ and core styling logic remain rule-based and deterministic.
 
 from __future__ import annotations
 
-from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
+from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
 
 from backend.core.config import Settings, get_settings
 from backend.core.exceptions import LLMError

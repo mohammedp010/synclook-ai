@@ -4,12 +4,11 @@ from functools import lru_cache
 
 from backend.agents.orchestrator import Orchestrator
 from backend.agents.recommendation_agent import RecommendationAgent
-from backend.agents.shopping_agent import ShoppingAgent
 from backend.agents.styling_agent import StylingAgent
 from backend.agents.vision_agent import VisionAgent
 from backend.db.redis import get_redis
-from backend.services.feedback import FeedbackService
 from backend.services.fashion_knowledge import FashionKnowledgeService
+from backend.services.feedback import FeedbackService
 from backend.services.llm import LLMService
 from backend.services.memory import MemoryService
 from backend.services.product_search import ProductSearchService

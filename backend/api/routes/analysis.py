@@ -44,16 +44,11 @@ async def analyze_clothing(
 
     # --- Validate upload ---
     if image.content_type not in settings.allowed_image_types:
-        raise_bad_request(
-            f"Unsupported image type '{image.content_type}'. "
-            f"Allowed: {settings.allowed_image_types}"
-        )
+        raise_bad_request(f"Unsupported image type '{image.content_type}'. Allowed: {settings.allowed_image_types}")
 
     contents = await image.read()
     if len(contents) > settings.max_upload_size_bytes:
-        raise_bad_request(
-            f"Image exceeds maximum size of {settings.max_upload_size_mb} MB"
-        )
+        raise_bad_request(f"Image exceeds maximum size of {settings.max_upload_size_mb} MB")
 
     logger.info(
         "analysis_requested",

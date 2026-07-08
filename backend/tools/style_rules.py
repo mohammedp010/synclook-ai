@@ -6,7 +6,7 @@ No LLM calls — purely rule-based.
 
 from __future__ import annotations
 
-from backend.schemas.clothing import ClothingType, Color, Pattern, Style
+from backend.schemas.clothing import ClothingType, Pattern, Style
 
 # ──────────────────────────────────────────────────────────────────────
 #  Item-pairing table
@@ -14,15 +14,70 @@ from backend.schemas.clothing import ClothingType, Color, Pattern, Style
 
 ITEM_PAIRINGS: dict[ClothingType, list[ClothingType]] = {
     # Tops → bottoms + outerwear
-    ClothingType.TSHIRT: [ClothingType.JEANS, ClothingType.CHINOS, ClothingType.SHORTS, ClothingType.JACKET, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.SHIRT: [ClothingType.TROUSERS, ClothingType.CHINOS, ClothingType.JEANS, ClothingType.BLAZER, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.BLOUSE: [ClothingType.SKIRT, ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.BLAZER, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.SWEATER: [ClothingType.JEANS, ClothingType.CHINOS, ClothingType.TROUSERS, ClothingType.COAT, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.HOODIE: [ClothingType.JEANS, ClothingType.SHORTS, ClothingType.CHINOS, ClothingType.SHOES, ClothingType.ACCESSORY],
+    ClothingType.TSHIRT: [
+        ClothingType.JEANS,
+        ClothingType.CHINOS,
+        ClothingType.SHORTS,
+        ClothingType.JACKET,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.SHIRT: [
+        ClothingType.TROUSERS,
+        ClothingType.CHINOS,
+        ClothingType.JEANS,
+        ClothingType.BLAZER,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.BLOUSE: [
+        ClothingType.SKIRT,
+        ClothingType.TROUSERS,
+        ClothingType.JEANS,
+        ClothingType.BLAZER,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.SWEATER: [
+        ClothingType.JEANS,
+        ClothingType.CHINOS,
+        ClothingType.TROUSERS,
+        ClothingType.COAT,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.HOODIE: [
+        ClothingType.JEANS,
+        ClothingType.SHORTS,
+        ClothingType.CHINOS,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
     # Outerwear → tops + bottoms
-    ClothingType.JACKET: [ClothingType.TSHIRT, ClothingType.SHIRT, ClothingType.JEANS, ClothingType.CHINOS, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.BLAZER: [ClothingType.SHIRT, ClothingType.BLOUSE, ClothingType.TROUSERS, ClothingType.CHINOS, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.COAT: [ClothingType.SWEATER, ClothingType.SHIRT, ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.SHOES, ClothingType.ACCESSORY],
+    ClothingType.JACKET: [
+        ClothingType.TSHIRT,
+        ClothingType.SHIRT,
+        ClothingType.JEANS,
+        ClothingType.CHINOS,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.BLAZER: [
+        ClothingType.SHIRT,
+        ClothingType.BLOUSE,
+        ClothingType.TROUSERS,
+        ClothingType.CHINOS,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.COAT: [
+        ClothingType.SWEATER,
+        ClothingType.SHIRT,
+        ClothingType.TROUSERS,
+        ClothingType.JEANS,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
     # Bottoms → tops + outerwear
     ClothingType.TROUSERS: [
         ClothingType.SHIRT,
@@ -34,16 +89,63 @@ ITEM_PAIRINGS: dict[ClothingType, list[ClothingType]] = {
         ClothingType.SHOES,
         ClothingType.ACCESSORY,
     ],
-    ClothingType.JEANS: [ClothingType.TSHIRT, ClothingType.SHIRT, ClothingType.JACKET, ClothingType.SWEATER, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.SHORTS: [ClothingType.TSHIRT, ClothingType.SHIRT, ClothingType.HOODIE, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.CHINOS: [ClothingType.SHIRT, ClothingType.TSHIRT, ClothingType.BLAZER, ClothingType.SWEATER, ClothingType.SHOES, ClothingType.ACCESSORY],
-    ClothingType.SKIRT: [ClothingType.BLOUSE, ClothingType.TSHIRT, ClothingType.SWEATER, ClothingType.JACKET, ClothingType.SHOES, ClothingType.ACCESSORY],
+    ClothingType.JEANS: [
+        ClothingType.TSHIRT,
+        ClothingType.SHIRT,
+        ClothingType.JACKET,
+        ClothingType.SWEATER,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.SHORTS: [
+        ClothingType.TSHIRT,
+        ClothingType.SHIRT,
+        ClothingType.HOODIE,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.CHINOS: [
+        ClothingType.SHIRT,
+        ClothingType.TSHIRT,
+        ClothingType.BLAZER,
+        ClothingType.SWEATER,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.SKIRT: [
+        ClothingType.BLOUSE,
+        ClothingType.TSHIRT,
+        ClothingType.SWEATER,
+        ClothingType.JACKET,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
     # Full outfits → accessories/outerwear
-    ClothingType.DRESS: [ClothingType.JACKET, ClothingType.BLAZER, ClothingType.COAT, ClothingType.SHOES, ClothingType.ACCESSORY],
+    ClothingType.DRESS: [
+        ClothingType.JACKET,
+        ClothingType.BLAZER,
+        ClothingType.COAT,
+        ClothingType.SHOES,
+        ClothingType.ACCESSORY,
+    ],
     ClothingType.SUIT: [ClothingType.SHIRT, ClothingType.COAT, ClothingType.SHOES, ClothingType.ACCESSORY],
     # Footwear/accessories as base uploads still need enough structure for a look.
-    ClothingType.SHOES: [ClothingType.JEANS, ClothingType.TROUSERS, ClothingType.CHINOS, ClothingType.TSHIRT, ClothingType.SHIRT, ClothingType.ACCESSORY],
-    ClothingType.ACCESSORY: [ClothingType.JEANS, ClothingType.TROUSERS, ClothingType.CHINOS, ClothingType.TSHIRT, ClothingType.SHIRT, ClothingType.SHOES],
+    ClothingType.SHOES: [
+        ClothingType.JEANS,
+        ClothingType.TROUSERS,
+        ClothingType.CHINOS,
+        ClothingType.TSHIRT,
+        ClothingType.SHIRT,
+        ClothingType.ACCESSORY,
+    ],
+    ClothingType.ACCESSORY: [
+        ClothingType.JEANS,
+        ClothingType.TROUSERS,
+        ClothingType.CHINOS,
+        ClothingType.TSHIRT,
+        ClothingType.SHIRT,
+        ClothingType.SHOES,
+    ],
     ClothingType.OTHER: [ClothingType.JEANS, ClothingType.TSHIRT, ClothingType.SHOES],
 }
 
@@ -181,6 +283,7 @@ def _to_clothing_type(item_type: ClothingType | str) -> ClothingType | None:
         if ct.value == normalized:
             return ct
     return None
+
 
 # ──────────────────────────────────────────────────────────────────────
 #  Style compatibility table
@@ -366,8 +469,7 @@ class StyleRuleEngineTool:
         return [
             item
             for item in candidates
-            if self.is_item_allowed_for_gender(item, gender)
-            and self.is_item_allowed_for_style(detected_style, item)
+            if self.is_item_allowed_for_gender(item, gender) and self.is_item_allowed_for_style(detected_style, item)
         ]
 
     # ── Style compatibility ──────────────────────────────────────────

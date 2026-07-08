@@ -1,7 +1,7 @@
 """Application lifespan events — startup and shutdown."""
 
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # --- Shutdown ---
     # Close memory service if created via DI
     from backend.core.dependencies import get_memory_service
+
     try:
         memory = get_memory_service()
         await memory.close()

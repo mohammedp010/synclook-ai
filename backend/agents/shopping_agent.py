@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from backend.agents.base import AgentContext, BaseAgent
 from backend.core.logging import get_logger
-from backend.schemas.api import Recommendation
+from backend.schemas.api import ProductLink, Recommendation
 from backend.tools.product_search import ProductSearchTool
 from backend.tools.style_rules import (
     INVALID_ITEMS_BY_SHOPPING_INTENT,
@@ -36,7 +36,7 @@ class ShoppingAgent(BaseAgent):
         self._tool = product_tool
         self._style_tool = StyleRuleEngineTool()
 
-    def _post_filter_products(self, products: list, shopping_intent: str) -> list:
+    def _post_filter_products(self, products: list[ProductLink], shopping_intent: str) -> list[ProductLink]:
         """Filter shopping results that violate deterministic shopping intent."""
         normalized_intent = normalize_shopping_intent(shopping_intent)
         invalid_items = INVALID_ITEMS_BY_SHOPPING_INTENT.get(normalized_intent, set())
@@ -95,7 +95,7 @@ class ShoppingAgent(BaseAgent):
 
     def _score_product_match(
         self,
-        product,
+        product: ProductLink,
         *,
         allowed_item_type: str,
         color: str,
@@ -144,13 +144,13 @@ class ShoppingAgent(BaseAgent):
 
     def _validate_products(
         self,
-        products: list,
+        products: list[ProductLink],
         *,
         allowed_item_type: str,
         color: str,
         style: str,
         shopping_intent: str,
-    ) -> list:
+    ) -> list[ProductLink]:
         result = []
         for product in products:
             score, reason = self._score_product_match(
@@ -184,7 +184,7 @@ class ShoppingAgent(BaseAgent):
         shopping_intent = normalize_shopping_intent(ctx.shopping_intent or ctx.gender)
 
         # Deduplicate queries: group items by (item_type, color, style)
-        query_cache: dict[tuple[str, str, str], list] = {}
+        query_cache: dict[tuple[str, str, str], list[ProductLink]] = {}
 
         for rec in ctx.recommendations:
             if not isinstance(rec, Recommendation):
@@ -198,7 +198,7 @@ class ShoppingAgent(BaseAgent):
                     query_cache[key] = []
 
         # Fetch products for each unique query
-        for (item_type, color, style) in query_cache:
+        for item_type, color, style in query_cache:
             products = await self._tool.find_products(
                 item_type=item_type,
                 color=color,

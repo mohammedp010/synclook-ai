@@ -14,26 +14,31 @@ class SynclookError(Exception):
 
 class ImageProcessingError(SynclookError):
     """Raised when image processing fails."""
+
     pass
 
 
 class AgentError(SynclookError):
     """Raised when an agent encounters an error."""
+
     pass
 
 
 class LLMError(SynclookError):
     """Raised when LLM communication fails."""
+
     pass
 
 
 class ToolError(SynclookError):
     """Raised when a tool execution fails."""
+
     pass
 
 
 class ProductSearchError(SynclookError):
     """Raised when product search via SerpAPI fails."""
+
     pass
 
 

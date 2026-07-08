@@ -31,8 +31,7 @@ _OUTFIT_TEMPLATE = (
 )
 
 _ITEM_REASON_TEMPLATE = (
-    "{color} {item_type} — pairs well with your {detected_color} {detected_type} "
-    "for a {style} look."
+    "{color} {item_type} — pairs well with your {detected_color} {detected_type} for a {style} look."
 )
 
 # Maximum recommendations per request.
@@ -158,8 +157,7 @@ class RecommendationAgent(BaseAgent):
         candidates = [
             m
             for m in matches
-            if self._style_tool.get_item_category(m.item_type) == category
-            and m.item_type not in used_item_types
+            if self._style_tool.get_item_category(m.item_type) == category and m.item_type not in used_item_types
         ]
         if not candidates:
             return None
@@ -299,8 +297,7 @@ class RecommendationAgent(BaseAgent):
             # Hard contract for bottomwear inputs: exactly one topwear in extras.
             if self._style_tool.get_item_category(detected_type) == "bottomwear":
                 topwear_matches = [
-                    m for m in outfit_matches
-                    if self._style_tool.get_item_category(m.item_type) == "topwear"
+                    m for m in outfit_matches if self._style_tool.get_item_category(m.item_type) == "topwear"
                 ]
                 if len(topwear_matches) != 1:
                     continue
@@ -337,7 +334,10 @@ class RecommendationAgent(BaseAgent):
 
             # Tone-refine with LLM if available.
             rec = await self._enrich_recommendation(
-                rec, detected_type, detected_color, detected_style,
+                rec,
+                detected_type,
+                detected_color,
+                detected_style,
             )
 
             recommendations.append(rec)

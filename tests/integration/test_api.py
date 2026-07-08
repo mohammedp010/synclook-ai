@@ -1,10 +1,10 @@
 """API endpoint tests using httpx AsyncClient — no real server needed."""
 
 import io
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
-from httpx import AsyncClient, ASGITransport
+import pytest
+from httpx import ASGITransport, AsyncClient
 from PIL import Image
 
 from backend.agents.base import AgentContext, StyleMatch
@@ -68,6 +68,7 @@ def mock_orchestrator() -> AsyncMock:
 
     async def _stream_gen(*args, **kwargs):
         import json
+
         yield {"event": "status", "data": json.dumps({"stage": "start", "message": "started"})}
         yield {"event": "done", "data": json.dumps({"elapsed_s": 0.1})}
 
@@ -78,7 +79,7 @@ def mock_orchestrator() -> AsyncMock:
 @pytest.fixture
 def app(mock_orchestrator):
     """Create the FastAPI app with mocked dependencies."""
-    from backend.core.dependencies import get_orchestrator, get_feedback_service
+    from backend.core.dependencies import get_feedback_service, get_orchestrator
     from backend.db.session import get_db_session
 
     application = create_app()

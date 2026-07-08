@@ -1,7 +1,8 @@
 """Unit tests for RecommendationAgent."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from backend.agents.base import AgentContext, StyleMatch
 from backend.agents.recommendation_agent import (
@@ -12,7 +13,7 @@ from backend.agents.recommendation_agent import (
     _diversify_color,
 )
 from backend.core.exceptions import AgentError
-from backend.schemas.api import Recommendation, RecommendationItem
+from backend.schemas.api import Recommendation
 from backend.schemas.clothing import (
     ClothingAttributes,
     ClothingType,
@@ -142,9 +143,7 @@ class TestRecommendationAgent:
         for rec in result.recommendations:
             assert "Based on your" in rec.overall_explanation
 
-    async def test_llm_enrichment_called_when_enabled(
-        self, sample_context_with_matches: AgentContext
-    ) -> None:
+    async def test_llm_enrichment_called_when_enabled(self, sample_context_with_matches: AgentContext) -> None:
         mock_llm = AsyncMock()
         mock_llm.enabled = True
         mock_llm.generate_outfit_explanation = AsyncMock(return_value="LLM-generated explanation")
@@ -156,9 +155,7 @@ class TestRecommendationAgent:
         mock_llm.generate_outfit_explanation.assert_called()
         assert result.recommendations[0].overall_explanation == "LLM-generated explanation"
 
-    async def test_llm_failure_falls_back_to_template(
-        self, sample_context_with_matches: AgentContext
-    ) -> None:
+    async def test_llm_failure_falls_back_to_template(self, sample_context_with_matches: AgentContext) -> None:
         from backend.core.exceptions import LLMError
 
         mock_llm = AsyncMock()
@@ -188,11 +185,7 @@ class TestRecommendationAgent:
         agent = RecommendationAgent(llm_service=None)
         result = await agent.run(ctx)
 
-        suggested_items = {
-            item.item_type
-            for rec in result.recommendations
-            for item in rec.items
-        }
+        suggested_items = {item.item_type for rec in result.recommendations for item in rec.items}
         assert "blouse" not in suggested_items
         assert "shirt" in suggested_items
 
@@ -213,11 +206,7 @@ class TestRecommendationAgent:
         agent = RecommendationAgent(llm_service=None)
         result = await agent.run(ctx)
 
-        suggested_items = {
-            item.item_type
-            for rec in result.recommendations
-            for item in rec.items
-        }
+        suggested_items = {item.item_type for rec in result.recommendations for item in rec.items}
         assert "blouse" not in suggested_items
         assert "shirt" in suggested_items
 
@@ -237,11 +226,7 @@ class TestRecommendationAgent:
         agent = RecommendationAgent(llm_service=None)
         result = await agent.run(ctx)
 
-        suggested_items = {
-            item.item_type
-            for rec in result.recommendations
-            for item in rec.items
-        }
+        suggested_items = {item.item_type for rec in result.recommendations for item in rec.items}
         assert "blouse" in suggested_items
 
     async def test_bottomwear_look_has_single_topwear(self) -> None:
@@ -264,11 +249,7 @@ class TestRecommendationAgent:
 
         style_tool = StyleRuleEngineTool()
         for rec in result.recommendations:
-            topwear_count = sum(
-                1
-                for item in rec.items
-                if style_tool.get_item_category(item.item_type) == "topwear"
-            )
+            topwear_count = sum(1 for item in rec.items if style_tool.get_item_category(item.item_type) == "topwear")
             assert topwear_count == 1
 
     async def test_streetwear_bottomwear_skips_outerwear(self) -> None:
@@ -289,11 +270,7 @@ class TestRecommendationAgent:
         result = await agent.run(ctx)
 
         outerwear_types = {"blazer", "jacket", "coat"}
-        suggested = {
-            item.item_type
-            for rec in result.recommendations
-            for item in rec.items
-        }
+        suggested = {item.item_type for rec in result.recommendations for item in rec.items}
         assert suggested.isdisjoint(outerwear_types)
 
     async def test_style_tags_are_deduplicated(self, agent: RecommendationAgent) -> None:

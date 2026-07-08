@@ -13,11 +13,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.agents.base import AgentContext
-from backend.agents.recommendation_agent import RecommendationAgent
-from backend.agents.styling_agent import StylingAgent
-from backend.schemas.clothing import ClothingAttributes, ClothingType, Color, Pattern, Style
-from backend.tools.style_rules import StyleRuleEngineTool
+from backend.agents.base import AgentContext  # noqa: E402
+from backend.agents.recommendation_agent import RecommendationAgent  # noqa: E402
+from backend.agents.styling_agent import StylingAgent  # noqa: E402
+from backend.schemas.clothing import ClothingAttributes, ClothingType, Color, Pattern, Style  # noqa: E402
+from backend.tools.style_rules import StyleRuleEngineTool  # noqa: E402
 
 
 @dataclass
@@ -57,11 +57,7 @@ async def _run_case(case: dict[str, Any]) -> CaseResult:
     forbidden = {item.strip().lower() for item in case.get("forbidden", [])}
     expected = {item.strip().lower() for item in case.get("expected", [])}
 
-    all_items = [
-        rec_item
-        for rec in ctx.recommendations
-        for rec_item in rec.items
-    ]
+    all_items = [rec_item for rec in ctx.recommendations for rec_item in rec.items]
 
     invalid_item_hits = 0
     gender_mismatch_hits = 0

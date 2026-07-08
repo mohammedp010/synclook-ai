@@ -1,7 +1,8 @@
 """Unit tests for LLMService."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from backend.core.exceptions import LLMError
 from backend.services.llm import LLMService

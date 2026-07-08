@@ -153,7 +153,7 @@ class Orchestrator:
         gender: str = "unisex",
         shopping_intent: str | None = None,
         include_products: bool = True,
-    ) -> AsyncGenerator[dict, None]:
+    ) -> AsyncGenerator[dict[str, str], None]:
         """Execute the pipeline while yielding SSE-friendly progress events.
 
         Each yielded dict has ``event`` and ``data`` keys suitable for
@@ -169,7 +169,10 @@ class Orchestrator:
         t0 = time.perf_counter()
         request_id = str(ctx.request_id)
 
-        yield {"event": "status", "data": json.dumps({"stage": "start", "message": "Analysis started", "request_id": request_id})}
+        yield {
+            "event": "status",
+            "data": json.dumps({"stage": "start", "message": "Analysis started", "request_id": request_id}),
+        }
 
         # Load user preferences
         if self._memory and user_id:
@@ -179,7 +182,12 @@ class Orchestrator:
             except Exception:
                 pass
 
-        agent_labels = {"vision": "Analyzing image...", "styling": "Generating style matches...", "recommendation": "Building recommendations...", "shopping": "Finding products online..."}
+        agent_labels = {
+            "vision": "Analyzing image...",
+            "styling": "Generating style matches...",
+            "recommendation": "Building recommendations...",
+            "shopping": "Finding products online...",
+        }
 
         for agent in self._pipeline:
             label = agent_labels.get(agent.name, agent.name)
@@ -194,7 +202,10 @@ class Orchestrator:
                 yield {"event": "warning", "data": json.dumps({"stage": agent.name, "error": str(exc)})}
                 break
 
-            yield {"event": "agent_done", "data": json.dumps({"stage": agent.name, "message": f"{agent.name} complete"})}
+            yield {
+                "event": "agent_done",
+                "data": json.dumps({"stage": agent.name, "message": f"{agent.name} complete"}),
+            }
 
         # Save to memory
         if self._memory and user_id and ctx.clothing_attributes:
@@ -218,8 +229,7 @@ class Orchestrator:
             "request_id": request_id,
             "detected_attributes": ctx.clothing_attributes.model_dump(mode="json") if ctx.clothing_attributes else None,
             "recommendations": [
-                rec.model_dump(mode="json") if hasattr(rec, "model_dump") else rec
-                for rec in ctx.recommendations
+                rec.model_dump(mode="json") if hasattr(rec, "model_dump") else rec for rec in ctx.recommendations
             ],
             "errors": ctx.errors or None,
         }

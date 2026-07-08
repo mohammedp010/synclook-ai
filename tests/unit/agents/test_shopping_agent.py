@@ -17,7 +17,6 @@ from backend.schemas.api import (
 from backend.services.product_search import ProductSearchService
 from backend.tools.product_search import ProductSearchTool
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────
 
 
@@ -295,7 +294,7 @@ class TestShoppingAgent:
     @pytest.mark.asyncio
     async def test_skips_when_no_tool(self, ctx_with_recommendations):
         agent = ShoppingAgent(product_tool=None)
-        ctx = await agent.run(ctx_with_recommendations)
+        await agent.run(ctx_with_recommendations)
         assert agent.state == AgentState.DONE
 
     @pytest.mark.asyncio
@@ -309,18 +308,12 @@ class TestShoppingAgent:
     @pytest.mark.asyncio
     async def test_deduplicates_queries(self, mock_product_tool):
         """Items with same type+color+style should result in one API call."""
-        mock_product_tool.find_products = AsyncMock(
-            return_value=[_sample_product(1, title="White trousers for men")]
-        )
+        mock_product_tool.find_products = AsyncMock(return_value=[_sample_product(1, title="White trousers for men")])
         rec = Recommendation(
             id=uuid4(),
             items=[
-                RecommendationItem(
-                    item_type="trousers", color="white", style="casual", reason="r1"
-                ),
-                RecommendationItem(
-                    item_type="trousers", color="white", style="casual", reason="r2"
-                ),
+                RecommendationItem(item_type="trousers", color="white", style="casual", reason="r1"),
+                RecommendationItem(item_type="trousers", color="white", style="casual", reason="r2"),
             ],
             overall_explanation="test",
             style_tags=[],

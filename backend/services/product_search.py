@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Any
 
 import httpx
 
@@ -95,7 +96,7 @@ class ProductSearchService:
         if not self.enabled:
             return []
 
-        params = {
+        params: dict[str, str | int] = {
             "engine": "google_shopping",
             "q": query,
             "api_key": self._api_key,
@@ -118,7 +119,7 @@ class ProductSearchService:
 
         return self._parse_results(data)
 
-    def _parse_results(self, data: dict) -> list[ProductLink]:
+    def _parse_results(self, data: dict[str, Any]) -> list[ProductLink]:
         """Extract ProductLink objects from SerpAPI shopping_results."""
         products: list[ProductLink] = []
 
