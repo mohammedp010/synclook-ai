@@ -476,12 +476,12 @@ class TestShoppingAgent:
 
         matched = result.recommendations[0].items[0].products[0]
         assert matched.match_score > 0.5
-        assert "matches shirt" in matched.match_reason
+        assert matched.match_reason  # human-readable evidence for the match
 
     @pytest.mark.asyncio
     async def test_sorts_products_by_match_score(self):
         weaker = ProductLink(
-            title="Shirt for men",
+            title="White shirt",
             price="₹999",
             link="https://example.com/weaker",
             thumbnail="",

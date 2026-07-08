@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     # --- SerpAPI (Product Search) ---
     serpapi_api_key: str = ""
     shopping_enabled: bool = True
+    # "embedding" ranks products by CLIP similarity to the desired-item spec;
+    # "keyword" is the legacy title-token matcher (kept for eval comparison).
+    shopping_matcher: str = "embedding"
+    shopping_match_threshold: float = 0.75
     shopping_cache_ttl_seconds: int = 604800  # 7 days
     shopping_results_per_item: int = 2
     shopping_country: str = "in"  # gl parameter for SerpAPI

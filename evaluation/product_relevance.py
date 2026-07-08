@@ -1,19 +1,23 @@
-"""Offline product-relevance evaluation for the shopping matcher.
+"""Offline product-relevance evaluation for the shopping matchers.
 
 Runs the ShoppingAgent's product scoring over hand-labeled fixtures
 (``product_cases.json``) and reports precision / recall / F1 of the
-"keep vs drop" decision against the labels.
+"keep vs drop" decision against the labels, for both matchers:
 
-This is the baseline the embedding-based reranker (Phase 3) must beat:
-run it before and after swapping the matcher and compare.
+- ``keyword``: legacy title-token matching (no models needed)
+- ``embedding``: CLIP similarity to the desired-item spec (loads CLIP;
+  fixture thumbnails are fake, so this measures the title-text component)
 
 Usage::
 
-    poetry run python evaluation/product_relevance.py
+    poetry run python evaluation/product_relevance.py              # both matchers
+    poetry run python evaluation/product_relevance.py --matcher keyword
 """
 
 from __future__ import annotations
 
+import argparse
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -29,7 +33,7 @@ from backend.schemas.api import ProductLink  # noqa: E402
 CASES_PATH = Path(__file__).resolve().parent / "product_cases.json"
 
 
-def evaluate_product_relevance(cases_path: Path = CASES_PATH) -> dict[str, Any]:
+async def evaluate_product_relevance(cases_path: Path = CASES_PATH, matcher: str = "keyword") -> dict[str, Any]:
     cases = json.loads(cases_path.read_text(encoding="utf-8"))
     agent = ShoppingAgent(product_tool=None)
 
@@ -50,13 +54,22 @@ def evaluate_product_relevance(cases_path: Path = CASES_PATH) -> dict[str, Any]:
         ]
         labels = [bool(p["relevant"]) for p in case["products"]]
 
-        kept = agent._validate_products(
-            list(products),
-            allowed_item_type=desired["item_type"],
-            color=desired["color"],
-            style=desired["style"],
-            shopping_intent=desired["shopping_intent"],
-        )
+        if matcher == "embedding":
+            kept = await agent._validate_products_embedding(
+                list(products),
+                allowed_item_type=desired["item_type"],
+                color=desired["color"],
+                style=desired["style"],
+                shopping_intent=desired["shopping_intent"],
+            )
+        else:
+            kept = agent._validate_products_keyword(
+                list(products),
+                allowed_item_type=desired["item_type"],
+                color=desired["color"],
+                style=desired["style"],
+                shopping_intent=desired["shopping_intent"],
+            )
         kept_titles = {p.title for p in kept}
 
         case_tp = case_fp = case_fn = 0
@@ -94,19 +107,26 @@ def evaluate_product_relevance(cases_path: Path = CASES_PATH) -> dict[str, Any]:
             "precision": round(precision, 4),
             "recall": round(recall, 4),
             "f1": round(f1, 4),
-            "matcher": "keyword_baseline",
+            "matcher": matcher,
         },
         "cases": case_reports,
     }
 
 
-def main() -> None:
+async def main() -> None:
     from backend.core.logging import setup_logging
 
     setup_logging("ERROR")
-    report = evaluate_product_relevance()
-    print(json.dumps(report, indent=2))
+    parser = argparse.ArgumentParser(description="Evaluate shopping product-relevance matchers")
+    parser.add_argument("--matcher", choices=["keyword", "embedding", "both"], default="both")
+    args = parser.parse_args()
+
+    matchers = ["keyword", "embedding"] if args.matcher == "both" else [args.matcher]
+    reports = {}
+    for matcher in matchers:
+        reports[matcher] = await evaluate_product_relevance(matcher=matcher)
+    print(json.dumps(reports, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
