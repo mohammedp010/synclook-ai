@@ -1,0 +1,44 @@
+[
+  {
+    "name": "black_trousers_male_streetwear",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "streetwear",
+      "confidence": 0.82,
+      "gender": "male"
+    },
+    "expected": ["shirt", "t-shirt", "hoodie", "shoes", "accessory"],
+    "forbidden": ["blouse", "skirt", "dress"],
+    "expected_categories": ["topwear", "footwear", "accessory"]
+  },
+  {
+    "name": "black_trousers_male_formal",
+    "input": {
+      "clothing_type": "trousers",
+      "primary_color": "black",
+      "pattern": "solid",
+      "style": "formal",
+      "confidence": 0.9,
+      "gender": "male"
+    },
+    "expected": ["shirt", "blazer", "shoes", "accessory"],
+    "forbidden": ["blouse", "skirt", "dress"],
+    "expected_categories": ["topwear", "outerwear", "footwear", "accessory"]
+  },
+  {
+    "name": "navy_shirt_unisex_smart_casual",
+    "input": {
+      "clothing_type": "shirt",
+      "primary_color": "navy",
+      "pattern": "solid",
+      "style": "smart_casual",
+      "confidence": 0.88,
+      "gender": "unisex"
+    },
+    "expected": ["trousers", "chinos", "jeans", "shoes", "accessory"],
+    "forbidden": ["dress", "skirt"],
+    "expected_categories": ["bottomwear", "footwear", "accessory"]
+  }
+]

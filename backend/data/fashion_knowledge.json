@@ -1,0 +1,172 @@
+{
+  "trousers": {
+    "category": "bottomwear",
+    "best_matches": ["shirt", "t-shirt", "sweater", "hoodie", "shoes", "accessory"],
+    "avoid": {
+      "male": ["blouse", "dress", "skirt"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["t-shirt", "hoodie", "shirt", "shoes", "accessory"],
+      "formal": ["shirt", "blazer", "shoes", "accessory"],
+      "casual": ["t-shirt", "shirt", "sweater", "shoes", "accessory"],
+      "smart_casual": ["shirt", "sweater", "blazer", "shoes", "accessory"]
+    }
+  },
+  "jeans": {
+    "category": "bottomwear",
+    "best_matches": ["t-shirt", "shirt", "hoodie", "sweater", "shoes", "accessory"],
+    "avoid": {
+      "male": ["blouse", "dress"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["t-shirt", "hoodie", "shoes", "accessory"],
+      "casual": ["t-shirt", "shirt", "sweater", "shoes", "accessory"],
+      "smart_casual": ["shirt", "blazer", "sweater", "shoes", "accessory"]
+    }
+  },
+  "chinos": {
+    "category": "bottomwear",
+    "best_matches": ["shirt", "t-shirt", "sweater", "blazer", "shoes", "accessory"],
+    "avoid": {
+      "male": ["blouse", "dress"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "formal": ["shirt", "blazer", "shoes", "accessory"],
+      "smart_casual": ["shirt", "sweater", "blazer", "shoes", "accessory"],
+      "casual": ["t-shirt", "shirt", "shoes", "accessory"]
+    }
+  },
+  "shorts": {
+    "category": "bottomwear",
+    "best_matches": ["t-shirt", "shirt", "hoodie", "shoes", "accessory"],
+    "avoid": {
+      "male": ["blouse", "dress"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["t-shirt", "hoodie", "shoes", "accessory"],
+      "casual": ["t-shirt", "shirt", "shoes", "accessory"],
+      "sporty": ["t-shirt", "hoodie", "shoes", "accessory"]
+    }
+  },
+  "shirt": {
+    "category": "topwear",
+    "best_matches": ["trousers", "chinos", "jeans", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "formal": ["trousers", "chinos", "shoes", "accessory"],
+      "smart_casual": ["chinos", "trousers", "jeans", "shoes", "accessory"],
+      "casual": ["jeans", "chinos", "shoes", "accessory"]
+    }
+  },
+  "t-shirt": {
+    "category": "topwear",
+    "best_matches": ["jeans", "shorts", "chinos", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["jeans", "shorts", "chinos", "shoes", "accessory"],
+      "casual": ["jeans", "shorts", "chinos", "shoes", "accessory"],
+      "sporty": ["shorts", "jeans", "shoes", "accessory"]
+    }
+  },
+  "hoodie": {
+    "category": "topwear",
+    "best_matches": ["jeans", "chinos", "shorts", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["jeans", "shorts", "chinos", "shoes", "accessory"],
+      "casual": ["jeans", "shorts", "shoes", "accessory"],
+      "sporty": ["shorts", "jeans", "shoes", "accessory"]
+    }
+  },
+  "sweater": {
+    "category": "topwear",
+    "best_matches": ["trousers", "jeans", "chinos", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "smart_casual": ["trousers", "chinos", "jeans", "shoes", "accessory"],
+      "casual": ["jeans", "chinos", "shoes", "accessory"],
+      "minimalist": ["trousers", "chinos", "shoes", "accessory"]
+    }
+  },
+  "jacket": {
+    "category": "outerwear",
+    "best_matches": ["t-shirt", "shirt", "jeans", "chinos", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["t-shirt", "hoodie", "jeans", "shoes", "accessory"],
+      "casual": ["t-shirt", "shirt", "jeans", "shoes", "accessory"],
+      "smart_casual": ["shirt", "chinos", "shoes", "accessory"]
+    }
+  },
+  "blazer": {
+    "category": "outerwear",
+    "best_matches": ["shirt", "trousers", "chinos", "shoes", "accessory"],
+    "avoid": {
+      "male": [],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "formal": ["shirt", "trousers", "chinos", "shoes", "accessory"],
+      "smart_casual": ["shirt", "chinos", "shoes", "accessory"]
+    }
+  },
+  "shoes": {
+    "category": "footwear",
+    "best_matches": ["jeans", "trousers", "chinos", "t-shirt", "shirt", "accessory"],
+    "avoid": {
+      "male": ["blouse", "dress", "skirt"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["jeans", "t-shirt", "hoodie", "accessory"],
+      "formal": ["trousers", "shirt", "blazer", "accessory"],
+      "casual": ["jeans", "t-shirt", "shirt", "accessory"],
+      "smart_casual": ["chinos", "shirt", "blazer", "accessory"]
+    }
+  },
+  "accessory": {
+    "category": "accessory",
+    "best_matches": ["shirt", "t-shirt", "jeans", "trousers", "chinos", "shoes"],
+    "avoid": {
+      "male": ["blouse", "dress", "skirt"],
+      "female": [],
+      "unisex": []
+    },
+    "styles": {
+      "streetwear": ["t-shirt", "hoodie", "jeans", "shoes"],
+      "formal": ["shirt", "trousers", "blazer", "shoes"],
+      "casual": ["t-shirt", "shirt", "jeans", "shoes"],
+      "smart_casual": ["shirt", "chinos", "blazer", "shoes"]
+    }
+  }
+}
