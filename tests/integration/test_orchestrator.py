@@ -73,12 +73,12 @@ class TestOrchestratorRun:
         """If StylingAgent raises, vision results should still be present."""
         orch = Orchestrator(vision_service=mock_vision_svc)
 
-        # Monkey-patch the styling agent's _execute to raise
+        # Monkey-patch the graph's styling agent to raise
 
         async def bad_execute(ctx):
             raise RuntimeError("styling crashed")
 
-        orch._pipeline[1]._execute = bad_execute
+        orch._graph._styling._execute = bad_execute
         ctx = await orch.run(b"fake-image")
 
         assert ctx.clothing_attributes is not None
@@ -186,4 +186,5 @@ class TestOrchestratorRunStream:
             events.append(event)
 
         agent_done_stages = [json.loads(e["data"])["stage"] for e in events if e["event"] == "agent_done"]
-        assert agent_done_stages == ["vision", "styling", "recommendation", "shopping"]
+        # No product tool is configured, so the planner routes past shopping.
+        assert agent_done_stages == ["intent", "vision", "styling", "recommendation", "verifier"]

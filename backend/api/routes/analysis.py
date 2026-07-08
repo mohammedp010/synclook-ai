@@ -26,6 +26,7 @@ async def analyze_clothing(
     gender: Gender = Gender.UNISEX,
     shopping_intent: ShoppingIntent | None = None,
     include_products: bool = True,
+    user_intent: str | None = None,
     orchestrator: Orchestrator = Depends(get_orchestrator),
     db: AsyncSession = Depends(get_db_session),
     feedback_svc: FeedbackService = Depends(get_feedback_service),
@@ -66,6 +67,7 @@ async def analyze_clothing(
             gender=gender.value,
             shopping_intent=shopping_intent.value if shopping_intent else None,
             include_products=include_products,
+            user_intent=user_intent,
         )
     except ImageProcessingError:
         raise

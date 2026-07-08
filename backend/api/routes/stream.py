@@ -26,6 +26,7 @@ async def analyze_clothing_stream(
     gender: Gender = Gender.UNISEX,
     shopping_intent: ShoppingIntent | None = None,
     include_products: bool = True,
+    user_intent: str | None = None,
     orchestrator: Orchestrator = Depends(get_orchestrator),
 ) -> EventSourceResponse:
     """Stream clothing analysis progress via Server-Sent Events.
@@ -55,6 +56,7 @@ async def analyze_clothing_stream(
             gender=gender.value,
             shopping_intent=shopping_intent.value if shopping_intent else None,
             include_products=include_products,
+            user_intent=user_intent,
         ):
             if await request.is_disconnected():
                 logger.info("stream_client_disconnected", user_id=user_id)
