@@ -11,23 +11,21 @@
 ### Core Architecture
 
 ```
-User uploads image
+User uploads image (+ optional free-text intent)
     ↓
-[VisionAgent]  →  CLIP (zero-shot classification) + BLIP (captioning)
+LangGraph StateGraph (planner-routed, Phase 2):
+  [IntentAgent]    → DeepSeek structured output → validated StyleIntent (heuristic fallback)
+  [VisionAgent]    → CLIP zero-shot (1 image pass, cached text embeddings) + optional BLIP
+  [StylingAgent]   → Rule engine constrained by effective style + avoid list
+  [RecommendationAgent] → structure-driven looks + rule evidence + LLM-grounded explanations
+  [ShoppingAgent]  → SerpAPI products (conditional edge: skipped when intent declines)
+  [VerifierAgent]  → deterministic quality gate + LLM critic; fixable issues → 1 rebuild cycle
     ↓
-[StylingAgent]  →  Rule-based engine (color complements, style compatibility, pattern pairing)
+[Orchestrator façade]  →  same run()/run_stream() API over the compiled graph
     ↓
-[RecommendationAgent]  →  Builds outfit suggestions from style matches
+[Memory]  →  Redis preferences & history   [Tracing]  →  Langfuse spans + token usage
     ↓
-[ShoppingAgent]  →  SerpAPI Google Shopping → real product images + buy links  (Step 12)
-    ↓
-[Orchestrator]  →  Chains agents, manages context, handles errors  (Step 5)
-    ↓
-[LLM Tone Refinement]  →  DeepSeek optionally rewrites rule-generated explanations without changing facts  (Step 6 / Step 20)
-    ↓
-[Memory]  →  Redis stores user preferences & history  (Step 7)
-    ↓
-[Streaming]  →  SSE streams results to frontend  (Step 9)
+[Streaming]  →  SSE streams per-node progress to frontend
 ```
 
 ### Key Design Decisions
@@ -38,8 +36,10 @@ User uploads image
 | Python version | **3.12** (Homebrew) | Latest stable, required by deps |
 | Web framework | **FastAPI** | Async, Pydantic v2, OpenAPI docs |
 | Vision models | **CLIP** (`openai/clip-vit-base-patch32`) + **BLIP** (`Salesforce/blip-image-captioning-base`) | Local inference, no API costs |
-| LLM | **DeepSeek** (OpenAI-compatible API) | Optional tone refinement for deterministic explanations; not used for outfit selection |
-| Styling engine | **Rule-based** (deterministic) | Predictable, fast, no LLM dependency |
+| LLM | **DeepSeek** (OpenAI-compatible API) | Intent extraction (structured output), evidence-grounded explanations, verifier critique — outfit selection stays rule-based |
+| Styling engine | **Rule-based** (deterministic) | Predictable, fast; acts as guardrails around LLM-proposed intent |
+| Orchestration | **LangGraph StateGraph** | Conditional routing + verifier retry cycle; hand-rolled loop couldn't express cycles |
+| Observability | **Langfuse** (optional) | Agent spans, LLM generations, token usage; no-op without keys |
 | Database | **PostgreSQL** via asyncpg + SQLAlchemy async | Production-grade, JSONB support |
 | Cache/Memory | **Redis** | Fast KV store, TTL, pub/sub for streaming |
 | Product Search | **SerpAPI** (Google Shopping) | Real product links from Amazon.in, Myntra, etc. Cached in Redis (7d TTL) |
@@ -680,6 +680,39 @@ These are not 2.0 feature expansions. They are targeted fixes for current produc
 
 ---
 
+## Portfolio Upgrade Sprint (July 2026) — Phases 0-2 complete
+
+Executed against the approved upgrade plan (see git history from `Initial commit`).
+
+### ✅ Phase 0: Foundation & vision rewrite
+- git repo initialized (monorepo incl. frontend), GitHub Actions CI: ruff check + format, strict mypy (0 errors), pytest
+- Vision pipeline rewritten: **one CLIP image pass per request** (was 4), process-cached text prompt embeddings, warm latency **~15s → 0.041s**
+- Per-attribute confidences replace the meaningless 4-head average; `confidence` = clothing-type head
+- BLIP captioning optional (`VISION_ENABLE_CAPTION`, default off — ~1GB model not loaded)
+- `VisionResult` carries the L2-normalized CLIP embedding for downstream reuse (`ctx.metadata["image_embedding"]`)
+
+### ✅ Phase 1: Evals as a real gate + observability
+- Eval grid expanded 3 → **105 cases** (generated type×style grid + golden cases): structural metrics need no hand labels (empty-recommendation rate, complete-outfit rate, duplicates, intent mismatches, per-agent latency)
+- Expanded grid immediately found a real bug: **8.6% empty-recommendation rate** in style-policy dead zones → fixed with structure-aware safe fallback → **0.0%**
+- Product-relevance eval over 53 labeled products: keyword baseline **precision 0.74 / recall 0.96 / F1 0.84** (the number Phase 3's embedding reranker must beat)
+- `--check` gates run in CI; `--record` persists `EvaluationRun` rows with git SHA
+- Langfuse tracing: root span per analysis, agent-typed observations, LLM generations with token usage; disabled cleanly without keys
+
+### ✅ Phase 2: LangGraph agentic core
+- Orchestration rebuilt as a **StateGraph** with conditional edges; `Orchestrator` is now a façade (same API + SSE contract)
+- **IntentAgent**: free-text `user_intent` → DeepSeek structured output → deterministically validated `StyleIntent` (occasion, budget, climate, styles, avoid/owned items); keyword-heuristic fallback without an API key
+- Intent actually changes behavior: effective style drives the rule engine, avoid-list filters matches, owned items skip shopping, `wants_shopping=False` routes past the shopping node
+- **VerifierAgent**: deterministic checks (outfit completeness, forbidden/duplicate items, budget vs. product prices, unsupported explanation claims) + optional LLM critic; fixable issues trigger **exactly one constraint-tightened rebuild** via a graph cycle
+- Explanations are now **evidence-grounded**: each recommendation carries `evidence` (rule facts); the LLM words the explanation from those facts only (tone-refinement prompts deleted)
+- Verified: same image with "office" vs "gym" intent produces different outfits; seeded policy violations are caught and rebuilt; 221 tests + eval gate green
+
+### ⬜ Phase 3: pgvector + embedding product reranking + digital wardrobe
+### ⬜ Phase 4: LLM-as-judge metrics + observability dashboard + multi-garment vision
+### ⬜ Phase 5: Trend RAG + virtual try-on MVP + auth hardening
+### ⬜ Phase 6: README/ADRs/frontend intent & wardrobe UI
+
+---
+
 ## Key Files Quick Reference
 
 | What | File | Key exports |
@@ -720,4 +753,4 @@ These are not 2.0 feature expansions. They are targeted fixes for current produc
 
 ---
 
-*Last updated: 2 July 2026 - Step 29 shopping relevance scoring completed and validated (`167 passed`, frontend type-check passed).*
+*Last updated: 9 July 2026 — Portfolio upgrade Phases 0-2 complete (LangGraph pipeline, intent, verifier, evals, tracing; `221 passed`, eval gate green).*
