@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -15,6 +14,7 @@ from backend.schemas.clothing import (
     Pattern,
     Style,
 )
+from backend.services.vision import VisionResult
 
 
 @pytest.fixture
@@ -80,14 +80,17 @@ def mock_vision_service() -> AsyncMock:
     """Mock VisionService that returns sample attributes without loading models."""
     svc = AsyncMock()
     svc.analyze_image = AsyncMock(
-        return_value=ClothingAttributes(
-            clothing_type=ClothingType.SHIRT,
-            primary_color=Color.NAVY,
-            pattern=Pattern.SOLID,
-            style=Style.SMART_CASUAL,
-            confidence=0.85,
-            description="a navy blue dress shirt",
-            description_relevant=True,
+        return_value=VisionResult(
+            attributes=ClothingAttributes(
+                clothing_type=ClothingType.SHIRT,
+                primary_color=Color.NAVY,
+                pattern=Pattern.SOLID,
+                style=Style.SMART_CASUAL,
+                confidence=0.85,
+                description="a navy blue dress shirt",
+                description_relevant=True,
+            ),
+            image_embedding=[0.1] * 8,
         )
     )
     return svc

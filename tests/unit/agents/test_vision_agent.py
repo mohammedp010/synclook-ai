@@ -1,7 +1,8 @@
 """Unit tests for VisionAgent."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from backend.agents.base import AgentContext, AgentState
 from backend.agents.vision_agent import VisionAgent
@@ -13,6 +14,7 @@ from backend.schemas.clothing import (
     Pattern,
     Style,
 )
+from backend.services.vision import VisionResult
 
 
 class TestVisionAgent:
@@ -22,13 +24,16 @@ class TestVisionAgent:
     def vision_service(self) -> AsyncMock:
         svc = AsyncMock()
         svc.analyze_image = AsyncMock(
-            return_value=ClothingAttributes(
-                clothing_type=ClothingType.JEANS,
-                primary_color=Color.BLUE,
-                pattern=Pattern.SOLID,
-                style=Style.CASUAL,
-                confidence=0.9,
-                description="blue denim jeans",
+            return_value=VisionResult(
+                attributes=ClothingAttributes(
+                    clothing_type=ClothingType.JEANS,
+                    primary_color=Color.BLUE,
+                    pattern=Pattern.SOLID,
+                    style=Style.CASUAL,
+                    confidence=0.9,
+                    description="blue denim jeans",
+                ),
+                image_embedding=[0.1] * 8,
             )
         )
         return svc

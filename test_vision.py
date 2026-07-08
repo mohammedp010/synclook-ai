@@ -1,12 +1,10 @@
 """Smoke-test the vision pipeline with a real image download."""
 
 import asyncio
-import sys
-from pathlib import Path
+from io import BytesIO
 
 import httpx
 from PIL import Image
-from io import BytesIO
 
 
 async def main() -> None:
@@ -33,15 +31,16 @@ async def main() -> None:
 
     service = VisionService()
     print("\nRunning vision pipeline (first call downloads models — may take a minute) ...")
-    attrs = await service.analyze_image(image_bytes)
+    result = await service.analyze_image(image_bytes)
+    attrs = result.attributes
 
     print("\n=== RESULTS ===")
-    print(f"  Clothing Type : {attrs.clothing_type.value}")
-    print(f"  Primary Color : {attrs.primary_color.value}")
-    print(f"  Pattern       : {attrs.pattern.value}")
-    print(f"  Style         : {attrs.style.value}")
-    print(f"  Confidence    : {attrs.confidence}")
-    print(f"  Caption       : {attrs.description}")
+    print(f"  Clothing Type : {attrs.clothing_type.value} (conf={attrs.confidence})")
+    print(f"  Primary Color : {attrs.primary_color.value} (conf={attrs.color_confidence})")
+    print(f"  Pattern       : {attrs.pattern.value} (conf={attrs.pattern_confidence})")
+    print(f"  Style         : {attrs.style.value} (conf={attrs.style_confidence})")
+    print(f"  Caption       : {attrs.description or '(captioning disabled)'}")
+    print(f"  Embedding dim : {len(result.image_embedding)}")
 
 
 if __name__ == "__main__":

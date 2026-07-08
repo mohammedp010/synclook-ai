@@ -77,7 +77,10 @@ class ClothingAttributes(BaseModel):
     secondary_color: Color | None = None
     pattern: Pattern = Pattern.SOLID
     style: Style
-    confidence: float = Field(ge=0.0, le=1.0, description="Detection confidence score")
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence of the clothing-type detection (primary signal)")
+    color_confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence of the color detection")
+    pattern_confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence of the pattern detection")
+    style_confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence of the style detection")
     description: str = Field(default="", description="Free-text description from BLIP captioning")
     description_relevant: bool = Field(
         default=True,

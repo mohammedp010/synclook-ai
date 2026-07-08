@@ -1,10 +1,10 @@
 """Integration tests for Orchestrator — full pipeline with mocked VisionService."""
 
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
-from backend.agents.base import AgentContext
+import pytest
+
 from backend.agents.orchestrator import Orchestrator
 from backend.core.exceptions import ImageProcessingError
 from backend.schemas.api import Recommendation
@@ -15,19 +15,23 @@ from backend.schemas.clothing import (
     Pattern,
     Style,
 )
+from backend.services.vision import VisionResult
 
 
 @pytest.fixture
 def mock_vision_svc() -> AsyncMock:
     svc = AsyncMock()
     svc.analyze_image = AsyncMock(
-        return_value=ClothingAttributes(
-            clothing_type=ClothingType.SHIRT,
-            primary_color=Color.NAVY,
-            pattern=Pattern.SOLID,
-            style=Style.SMART_CASUAL,
-            confidence=0.85,
-            description="a navy dress shirt",
+        return_value=VisionResult(
+            attributes=ClothingAttributes(
+                clothing_type=ClothingType.SHIRT,
+                primary_color=Color.NAVY,
+                pattern=Pattern.SOLID,
+                style=Style.SMART_CASUAL,
+                confidence=0.85,
+                description="a navy dress shirt",
+            ),
+            image_embedding=[0.1] * 8,
         )
     )
     return svc
@@ -70,7 +74,6 @@ class TestOrchestratorRun:
         orch = Orchestrator(vision_service=mock_vision_svc)
 
         # Monkey-patch the styling agent's _execute to raise
-        original_execute = orch._pipeline[1]._execute
 
         async def bad_execute(ctx):
             raise RuntimeError("styling crashed")
@@ -98,7 +101,7 @@ class TestOrchestratorRun:
             vision_service=mock_vision_svc,
             memory_service=mock_memory,
         )
-        ctx = await orch.run(b"fake", user_id="mem-user")
+        await orch.run(b"fake", user_id="mem-user")
 
         mock_memory.get_preferences.assert_called_once_with("mem-user")
         mock_memory.save_analysis.assert_called_once()
@@ -182,9 +185,5 @@ class TestOrchestratorRunStream:
         async for event in orchestrator.run_stream(b"fake"):
             events.append(event)
 
-        agent_done_stages = [
-            json.loads(e["data"])["stage"]
-            for e in events
-            if e["event"] == "agent_done"
-        ]
+        agent_done_stages = [json.loads(e["data"])["stage"] for e in events if e["event"] == "agent_done"]
         assert agent_done_stages == ["vision", "styling", "recommendation", "shopping"]

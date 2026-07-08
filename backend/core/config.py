@@ -1,7 +1,7 @@
 """Application configuration management via environment variables."""
 
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -26,7 +26,14 @@ class Settings(BaseSettings):
 
     # --- API ---
     api_prefix: str = "/api/v1"
-    allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:8081", "http://localhost:8082", "http://localhost:19006", "http://127.0.0.1:8081", "http://127.0.0.1:8082"]
+    allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:8081",
+        "http://localhost:8082",
+        "http://localhost:19006",
+        "http://127.0.0.1:8081",
+        "http://127.0.0.1:8082",
+    ]
 
     # --- Upload ---
     upload_dir: Path = Path("uploads")
@@ -54,6 +61,7 @@ class Settings(BaseSettings):
     vision_low_confidence_threshold: float = 0.5
     vision_use_center_crop: bool = False
     vision_center_crop_ratio: float = 0.85
+    vision_enable_caption: bool = False  # BLIP is ~1GB; caption is display-only metadata
 
     # --- SerpAPI (Product Search) ---
     serpapi_api_key: str = ""

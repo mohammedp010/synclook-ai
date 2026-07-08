@@ -22,5 +22,8 @@ class VisionAgent(BaseAgent):
         if ctx.image_bytes is None:
             raise AgentError("VisionAgent received no image data")
 
-        ctx.clothing_attributes = await self._vision.analyze_image(ctx.image_bytes)
+        result = await self._vision.analyze_image(ctx.image_bytes)
+        ctx.clothing_attributes = result.attributes
+        # Reusable by downstream stages (product reranking, wardrobe search).
+        ctx.metadata["image_embedding"] = result.image_embedding
         return ctx
