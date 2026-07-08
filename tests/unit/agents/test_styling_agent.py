@@ -168,4 +168,10 @@ class TestStylingAgent:
 
         assert result.metadata["low_confidence_detection"] is True
         suggested = {m.item_type for m in result.style_matches}
-        assert suggested.issubset({"shirt", "t-shirt", "hoodie", "sweater"})
+        # Conservative fallback: safe basics only, covering the outfit
+        # structure (topwear required for a bottomwear base, plus optional
+        # footwear/accessory) — never intent-violating items.
+        assert suggested
+        assert suggested.issubset({"shirt", "t-shirt", "sweater", "jacket", "shoes", "accessory"})
+        assert suggested & {"shirt", "t-shirt", "sweater"}  # required topwear covered
+        assert all(m.rule_source == "safe_fallback" for m in result.style_matches)

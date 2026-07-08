@@ -246,7 +246,11 @@ class RecommendationAgent(BaseAgent):
             m
             for m in ctx.style_matches
             if self._style_tool.is_item_allowed_for_gender(m.item_type, shopping_intent)
-            and self._style_tool.is_item_allowed_for_style(attrs.style, m.item_type)
+            # safe_fallback matches deliberately relax the style policy so a
+            # structure-complete look can still be assembled (dead-zone rescue).
+            and (
+                m.rule_source == "safe_fallback" or self._style_tool.is_item_allowed_for_style(attrs.style, m.item_type)
+            )
             and not self._knowledge.is_forbidden_pair(
                 base_item=detected_type,
                 candidate_item=m.item_type,

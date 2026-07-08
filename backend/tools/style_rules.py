@@ -226,35 +226,12 @@ ITEM_SPECIFIC_OUTFIT_STRUCTURE: dict[ClothingType, dict[str, list[str]]] = {
     },
 }
 
-SAFE_FALLBACK_BY_BASE_CATEGORY: dict[str, list[ClothingType]] = {
-    "bottomwear": [
-        ClothingType.SHIRT,
-        ClothingType.TSHIRT,
-        ClothingType.HOODIE,
-        ClothingType.SWEATER,
-    ],
-    "topwear": [
-        ClothingType.TROUSERS,
-        ClothingType.JEANS,
-        ClothingType.CHINOS,
-    ],
-    "outerwear": [
-        ClothingType.SHIRT,
-        ClothingType.TSHIRT,
-        ClothingType.TROUSERS,
-    ],
-    "footwear": [
-        ClothingType.JEANS,
-        ClothingType.TROUSERS,
-        ClothingType.TSHIRT,
-        ClothingType.SHIRT,
-    ],
-    "accessory": [
-        ClothingType.JEANS,
-        ClothingType.TROUSERS,
-        ClothingType.TSHIRT,
-        ClothingType.SHIRT,
-    ],
+SAFE_DEFAULTS_BY_CATEGORY: dict[str, list[ClothingType]] = {
+    "topwear": [ClothingType.SHIRT, ClothingType.TSHIRT, ClothingType.SWEATER],
+    "bottomwear": [ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.CHINOS],
+    "outerwear": [ClothingType.JACKET, ClothingType.BLAZER],
+    "footwear": [ClothingType.SHOES],
+    "accessory": [ClothingType.ACCESSORY],
 }
 
 
@@ -463,14 +440,34 @@ class StyleRuleEngineTool:
         detected_style: Style,
         gender: str = "unisex",
     ) -> list[ClothingType]:
-        """Return conservative fallback items for low-confidence detections."""
-        category = self.get_item_category(base_item_type)
-        candidates = SAFE_FALLBACK_BY_BASE_CATEGORY.get(category, [ClothingType.SHIRT, ClothingType.TROUSERS])
-        return [
-            item
-            for item in candidates
-            if self.is_item_allowed_for_gender(item, gender) and self.is_item_allowed_for_style(detected_style, item)
-        ]
+        """Structure-aware conservative fallback for low-confidence detections.
+
+        Covers every category the base item's outfit structure needs, so the
+        recommendation stage can always assemble a complete look. Prefers
+        style-compatible items, but relaxes the style filter rather than leave
+        a *required* category empty — coverage beats style adherence here.
+        """
+        structure = self.get_outfit_structure(base_item_type)
+        required = list(structure.get("required", []))
+        items: list[ClothingType] = []
+
+        for category in [*required, *structure.get("optional", [])]:
+            candidates = [
+                item
+                for item in SAFE_DEFAULTS_BY_CATEGORY.get(category, [])
+                if self.is_item_allowed_for_gender(item, gender)
+            ]
+            style_ok = [item for item in candidates if self.is_item_allowed_for_style(detected_style, item)]
+            picked = style_ok or (candidates if category in required else [])
+            items.extend(picked[:2])
+
+        seen: set[ClothingType] = set()
+        deduped: list[ClothingType] = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                deduped.append(item)
+        return deduped
 
     # ── Style compatibility ──────────────────────────────────────────
 

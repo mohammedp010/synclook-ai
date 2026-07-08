@@ -10,6 +10,7 @@ from backend.agents.base import AgentContext, BaseAgent, StyleMatch
 from backend.core.config import get_settings
 from backend.core.exceptions import AgentError
 from backend.core.logging import get_logger
+from backend.schemas.clothing import ClothingAttributes, ClothingType
 from backend.services.fashion_knowledge import FashionKnowledgeService
 from backend.tools.color_matcher import ColorMatcherTool
 from backend.tools.style_rules import StyleRuleEngineTool
@@ -45,47 +46,23 @@ class StylingAgent(BaseAgent):
         self._knowledge = fashion_knowledge or FashionKnowledgeService()
         self._settings = get_settings()
 
-    async def _execute(self, ctx: AgentContext) -> AgentContext:
-        attrs = ctx.clothing_attributes
-        if attrs is None:
-            raise AgentError("StylingAgent requires clothing_attributes in context")
+    def _build_matches(
+        self,
+        paired_types: list[ClothingType],
+        attrs: ClothingAttributes,
+        ctx: AgentContext,
+        shopping_intent: str,
+        *,
+        relax_style: bool = False,
+        rule_source: str = "color_complement+style_compat+pattern",
+    ) -> list[StyleMatch]:
+        """Score candidate item types into StyleMatch objects.
 
+        ``relax_style=True`` skips the style-policy filter — used for safe
+        fallbacks, where the candidate list is already conservative and
+        coverage matters more than strict style adherence.
+        """
         matches: list[StyleMatch] = []
-        shopping_intent = normalize_shopping_intent(ctx.shopping_intent or ctx.gender)
-
-        paired_types = self.style_tool.get_paired_items(
-            attrs.clothing_type,
-            gender=shopping_intent,
-        )
-        knowledge_matches = self._knowledge.get_best_matches(
-            attrs.clothing_type.value,
-            style=attrs.style.value,
-            gender=shopping_intent,
-        )
-        knowledge_types = self._knowledge.to_clothing_types(knowledge_matches)
-
-        low_confidence = attrs.confidence < self._settings.vision_low_confidence_threshold
-        if low_confidence:
-            fallback_items = self.style_tool.get_safe_fallback_items(
-                attrs.clothing_type,
-                detected_style=attrs.style,
-                gender=shopping_intent,
-            )
-            if knowledge_types:
-                fallback_knowledge = [it for it in knowledge_types if it in fallback_items]
-                if fallback_knowledge:
-                    fallback_items = fallback_knowledge
-            if fallback_items:
-                paired_types = fallback_items
-            ctx.metadata["low_confidence_detection"] = True
-        else:
-            ctx.metadata["low_confidence_detection"] = False
-            if knowledge_types:
-                allowed = set(paired_types)
-                ranked = [it for it in knowledge_types if it in allowed]
-                if ranked:
-                    paired_types = ranked
-
         complement_colors = self.color_tool.get_complements(attrs.primary_color)
         compatible_styles = self.style_tool.get_compatible_styles(attrs.style)
 
@@ -97,7 +74,7 @@ class StylingAgent(BaseAgent):
             ):
                 continue
 
-            if not self.style_tool.is_item_allowed_for_style(attrs.style, item_type):
+            if not relax_style and not self.style_tool.is_item_allowed_for_style(attrs.style, item_type):
                 continue
 
             score = self.style_tool.compute_match_score(
@@ -129,12 +106,86 @@ class StylingAgent(BaseAgent):
                     recommended_colors=colors_for_item,
                     recommended_styles=styles_for_item,
                     match_score=round(score, 2),
-                    rule_source="color_complement+style_compat+pattern",
+                    rule_source=rule_source,
                 )
             )
 
-        # Sort by score descending, keep top results
         matches.sort(key=lambda m: m.match_score, reverse=True)
+        return matches
+
+    async def _execute(self, ctx: AgentContext) -> AgentContext:
+        attrs = ctx.clothing_attributes
+        if attrs is None:
+            raise AgentError("StylingAgent requires clothing_attributes in context")
+
+        shopping_intent = normalize_shopping_intent(ctx.shopping_intent or ctx.gender)
+
+        low_confidence = attrs.confidence < self._settings.vision_low_confidence_threshold
+        ctx.metadata["low_confidence_detection"] = low_confidence
+
+        if low_confidence:
+            # Conservative structure-covering fallback; the style filter is
+            # relaxed because get_safe_fallback_items already applied it with
+            # required-category coverage taking precedence.
+            paired_types = self.style_tool.get_safe_fallback_items(
+                attrs.clothing_type,
+                detected_style=attrs.style,
+                gender=shopping_intent,
+            )
+            matches = self._build_matches(
+                paired_types, attrs, ctx, shopping_intent, relax_style=True, rule_source="safe_fallback"
+            )
+        else:
+            paired_types = self.style_tool.get_paired_items(
+                attrs.clothing_type,
+                gender=shopping_intent,
+            )
+            knowledge_matches = self._knowledge.get_best_matches(
+                attrs.clothing_type.value,
+                style=attrs.style.value,
+                gender=shopping_intent,
+            )
+            knowledge_types = self._knowledge.to_clothing_types(knowledge_matches)
+            if knowledge_types:
+                allowed = set(paired_types)
+                ranked = [it for it in knowledge_types if it in allowed]
+                if ranked:
+                    paired_types = ranked
+            matches = self._build_matches(paired_types, attrs, ctx, shopping_intent)
+
+        # Style-policy dead zone (e.g. sporty blazer keeps only shoes/accessory):
+        # if the matches cannot cover the outfit structure's required categories,
+        # extend them with conservative structure-covering items instead of
+        # letting the recommendation stage produce nothing.
+        structure = self.style_tool.get_outfit_structure(attrs.clothing_type)
+        covered = {self.style_tool.get_item_category(m.item_type) for m in matches}
+        missing = [category for category in structure.get("required", []) if category not in covered]
+        if missing or not matches:
+            safe_items = self.style_tool.get_safe_fallback_items(
+                attrs.clothing_type,
+                detected_style=attrs.style,
+                gender=shopping_intent,
+            )
+            existing_types = {m.item_type for m in matches}
+            gap_fillers = [
+                item
+                for item in safe_items
+                if item.value not in existing_types
+                and (not matches or self.style_tool.get_item_category(item) in missing)
+            ]
+            matches = matches + self._build_matches(
+                gap_fillers, attrs, ctx, shopping_intent, relax_style=True, rule_source="safe_fallback"
+            )
+            matches.sort(key=lambda m: m.match_score, reverse=True)
+            ctx.metadata["style_dead_zone_fallback"] = True
+            logger.warning(
+                "styling_dead_zone_fallback",
+                clothing_type=attrs.clothing_type.value,
+                style=attrs.style.value,
+                missing_categories=missing,
+                num_matches=len(matches),
+            )
+
         ctx.style_matches = matches
 
         logger.info(
