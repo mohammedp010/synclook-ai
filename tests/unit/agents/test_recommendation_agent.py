@@ -146,13 +146,18 @@ class TestRecommendationAgent:
     async def test_llm_enrichment_called_when_enabled(self, sample_context_with_matches: AgentContext) -> None:
         mock_llm = AsyncMock()
         mock_llm.enabled = True
-        mock_llm.generate_outfit_explanation = AsyncMock(return_value="LLM-generated explanation")
-        mock_llm.generate_item_reason = AsyncMock(return_value="LLM-generated reason")
+        mock_llm.generate_grounded_explanation = AsyncMock(return_value="LLM-generated explanation")
 
         agent = RecommendationAgent(llm_service=mock_llm)
         result = await agent.run(sample_context_with_matches)
 
-        mock_llm.generate_outfit_explanation.assert_called()
+        mock_llm.generate_grounded_explanation.assert_called()
+        # The LLM must have been given the rule evidence, not free rein.
+        call_kwargs = mock_llm.generate_grounded_explanation.call_args.kwargs
+        assert call_kwargs["facts"], "explanation call missing rule evidence"
+        result_rec = result.recommendations[0]
+        assert result_rec.overall_explanation == "LLM-generated explanation"
+        assert result_rec.evidence
         assert result.recommendations[0].overall_explanation == "LLM-generated explanation"
 
     async def test_llm_failure_falls_back_to_template(self, sample_context_with_matches: AgentContext) -> None:
@@ -160,7 +165,7 @@ class TestRecommendationAgent:
 
         mock_llm = AsyncMock()
         mock_llm.enabled = True
-        mock_llm.generate_outfit_explanation = AsyncMock(side_effect=LLMError("API down"))
+        mock_llm.generate_grounded_explanation = AsyncMock(side_effect=LLMError("API down"))
 
         agent = RecommendationAgent(llm_service=mock_llm)
         result = await agent.run(sample_context_with_matches)

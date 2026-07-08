@@ -1,8 +1,9 @@
 """Recommendation Agent — converts StyleMatches into user-facing Recommendations.
 
-Uses rule-based reasoning to build outfit suggestions.
-If an LLMService is provided, explanations are tone-refined via DeepSeek.
-Falls back to template strings if LLM is unavailable.
+Outfit assembly is rule-based and deterministic. Each recommendation carries
+structured ``evidence`` (the rule facts it is grounded in); when an LLMService
+is available the user-facing explanation is generated from that evidence only,
+otherwise template strings are used.
 """
 
 from __future__ import annotations
@@ -10,9 +11,12 @@ from __future__ import annotations
 from uuid import uuid4
 
 from backend.agents.base import AgentContext, BaseAgent, StyleMatch
+from backend.agents.intent_agent import intent_from_context
 from backend.core.exceptions import AgentError, LLMError
 from backend.core.logging import get_logger
 from backend.schemas.api import Recommendation, RecommendationItem
+from backend.schemas.clothing import Style
+from backend.schemas.intent import StyleIntent
 from backend.services.fashion_knowledge import FashionKnowledgeService
 from backend.services.llm import LLMService
 from backend.tools.style_rules import StyleRuleEngineTool, normalize_shopping_intent
@@ -34,6 +38,21 @@ _ITEM_REASON_TEMPLATE = (
     "{color} {item_type} — pairs well with your {detected_color} {detected_type} for a {style} look."
 )
 
+# Loose aliases for matching "I already own white sneakers" to item types.
+_OWNED_ALIASES = {
+    "sneakers": "shoes",
+    "trainers": "shoes",
+    "boots": "shoes",
+    "loafers": "shoes",
+    "tee": "t-shirt",
+    "tshirt": "t-shirt",
+    "pants": "trousers",
+    "denim": "jeans",
+    "belt": "accessory",
+    "watch": "accessory",
+    "bag": "accessory",
+}
+
 # Maximum recommendations per request.
 MAX_OUTFITS = 3
 MAX_ITEMS_PER_OUTFIT = 4
@@ -44,6 +63,24 @@ ALT_RANK_PENALTY_MAX = 0.15
 # ──────────────────────────────────────────────────────────────────────
 #  Helpers
 # ──────────────────────────────────────────────────────────────────────
+
+
+def _owned_item_types(intent: StyleIntent | None) -> set[str]:
+    """Map free-text owned items ("white sneakers") to catalog item types."""
+    if intent is None or not intent.owned_items:
+        return set()
+    from backend.schemas.clothing import ClothingType
+
+    owned: set[str] = set()
+    for phrase in intent.owned_items:
+        tokens = phrase.replace("-", " ").split()
+        for token in tokens:
+            if token in _OWNED_ALIASES:
+                owned.add(_OWNED_ALIASES[token])
+        for ct in ClothingType:
+            if ct.value in phrase or ct.value.replace("-", " ") in phrase:
+                owned.add(ct.value)
+    return owned
 
 
 def _build_recommendation(
@@ -83,6 +120,14 @@ def _build_recommendation(
     style_tags = [detected_style] + [m.recommended_styles[0] for m in matches if m.recommended_styles]
     deduped_style_tags = list(dict.fromkeys(style_tags))
 
+    # Structured rule evidence — the only facts an LLM explanation may cite.
+    evidence = [f"Base garment: {detected_color} {detected_type} ({detected_style})"]
+    for m in matches:
+        color = m.recommended_colors[0] if m.recommended_colors else "neutral"
+        evidence.append(
+            f"{color} {m.item_type} — {color} complements {detected_color}; paired via {m.rule_source} rules"
+        )
+
     return Recommendation(
         id=uuid4(),
         items=items,
@@ -92,6 +137,7 @@ def _build_recommendation(
             detected_style=detected_style,
             colors=all_colors or "complementary tones",
         ),
+        evidence=evidence,
         style_tags=deduped_style_tags,
         confidence=round(avg_score, 2),
     )
@@ -196,37 +242,24 @@ class RecommendationAgent(BaseAgent):
     async def _enrich_recommendation(
         self,
         rec: Recommendation,
-        detected_type: str,
-        detected_color: str,
-        detected_style: str,
+        intent: StyleIntent | None,
     ) -> Recommendation:
-        """Tone-refine deterministic explanations without changing outfit facts."""
+        """Generate the explanation from structured rule evidence (LLM-worded).
+
+        The LLM receives only ``rec.evidence`` facts — it words the reasoning
+        but cannot add items or claims. On failure the deterministic template
+        explanation (already set) is kept.
+        """
         if self._llm is None or not self._llm.enabled:
             return rec
 
         try:
-            # Refine overall explanation wording only.
-            overall = await self._llm.generate_outfit_explanation(
-                detected_type=detected_type,
-                detected_color=detected_color,
-                detected_style=detected_style,
-                rule_text=rec.overall_explanation,
+            rec.overall_explanation = await self._llm.generate_grounded_explanation(
+                facts=rec.evidence,
+                occasion=intent.occasion if intent else None,
             )
-            rec.overall_explanation = overall
-
-            # Refine individual item reason wording only.
-            for item in rec.items:
-                reason = await self._llm.generate_item_reason(
-                    detected_type=detected_type,
-                    detected_color=detected_color,
-                    detected_style=detected_style,
-                    rule_text=item.reason,
-                )
-                item.reason = reason
-
         except LLMError as exc:
-            # Fallback to templates — already set during _build_recommendation
-            logger.warning("llm_enrichment_failed", error=str(exc))
+            logger.warning("llm_explanation_failed", error=str(exc))
 
         return rec
 
@@ -239,17 +272,25 @@ class RecommendationAgent(BaseAgent):
 
         detected_type = attrs.clothing_type.value
         detected_color = attrs.primary_color.value
-        detected_style = attrs.style.value
         shopping_intent = normalize_shopping_intent(ctx.shopping_intent or ctx.gender)
 
+        # Intent constraints (validated upstream by IntentAgent).
+        intent = intent_from_context(ctx)
+        detected_style = ctx.metadata.get("effective_style") or attrs.style.value
+        avoid_items = set(intent.avoid_items) if intent else set()
+        owned_types = _owned_item_types(intent)
+
+        effective_style = Style(detected_style) if detected_style in {s.value for s in Style} else attrs.style
         valid_matches = [
             m
             for m in ctx.style_matches
-            if self._style_tool.is_item_allowed_for_gender(m.item_type, shopping_intent)
+            if m.item_type not in avoid_items
+            and self._style_tool.is_item_allowed_for_gender(m.item_type, shopping_intent)
             # safe_fallback matches deliberately relax the style policy so a
             # structure-complete look can still be assembled (dead-zone rescue).
             and (
-                m.rule_source == "safe_fallback" or self._style_tool.is_item_allowed_for_style(attrs.style, m.item_type)
+                m.rule_source == "safe_fallback"
+                or self._style_tool.is_item_allowed_for_style(effective_style, m.item_type)
             )
             and not self._knowledge.is_forbidden_pair(
                 base_item=detected_type,
@@ -336,13 +377,13 @@ class RecommendationAgent(BaseAgent):
                 detected_style=detected_style,
             )
 
-            # Tone-refine with LLM if available.
-            rec = await self._enrich_recommendation(
-                rec,
-                detected_type,
-                detected_color,
-                detected_style,
-            )
+            # Mark items the user already owns; shopping skips these.
+            for item in rec.items:
+                if item.item_type in owned_types:
+                    item.owned = True
+
+            # Word the explanation from rule evidence (LLM) if available.
+            rec = await self._enrich_recommendation(rec, intent)
 
             recommendations.append(rec)
 

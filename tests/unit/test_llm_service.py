@@ -8,14 +8,17 @@ from backend.core.exceptions import LLMError
 from backend.services.llm import LLMService
 
 
+def _disabled_service() -> LLMService:
+    settings = MagicMock()
+    settings.deepseek_api_key = ""
+    return LLMService(settings=settings)
+
+
 class TestLLMService:
     """Tests for LLMService — no real API calls."""
 
     def test_disabled_without_api_key(self) -> None:
-        settings = MagicMock()
-        settings.deepseek_api_key = ""
-        svc = LLMService(settings=settings)
-        assert svc.enabled is False
+        assert _disabled_service().enabled is False
 
     def test_enabled_with_api_key(self) -> None:
         settings = MagicMock()
@@ -25,32 +28,24 @@ class TestLLMService:
         assert svc.enabled is True
 
     async def test_chat_raises_when_disabled(self) -> None:
-        settings = MagicMock()
-        settings.deepseek_api_key = ""
-        svc = LLMService(settings=settings)
         with pytest.raises(LLMError, match="disabled"):
-            await svc._chat("test prompt")
+            await _disabled_service()._chat("system", "test prompt")
 
-    async def test_generate_outfit_explanation_when_disabled(self) -> None:
-        settings = MagicMock()
-        settings.deepseek_api_key = ""
-        svc = LLMService(settings=settings)
+    async def test_extract_intent_raises_when_disabled(self) -> None:
         with pytest.raises(LLMError):
-            await svc.generate_outfit_explanation(
-                detected_type="shirt",
-                detected_color="navy",
-                detected_style="casual",
-                rule_text="Navy shirt pairs with black jeans for a casual contrast.",
+            await _disabled_service().extract_intent("style this for a rainy dinner under 5000")
+
+    async def test_grounded_explanation_raises_when_disabled(self) -> None:
+        with pytest.raises(LLMError):
+            await _disabled_service().generate_grounded_explanation(
+                facts=["Base garment: navy shirt (smart_casual)"],
+                occasion="dinner",
             )
 
-    async def test_generate_item_reason_when_disabled(self) -> None:
-        settings = MagicMock()
-        settings.deepseek_api_key = ""
-        svc = LLMService(settings=settings)
+    async def test_critique_raises_when_disabled(self) -> None:
         with pytest.raises(LLMError):
-            await svc.generate_item_reason(
-                detected_type="shirt",
-                detected_color="navy",
-                detected_style="casual",
-                rule_text="Black jeans balance the navy shirt with clean casual contrast.",
+            await _disabled_service().critique_recommendations(
+                detected="navy shirt",
+                intent_summary="office party",
+                outfits=[{"items": ["trousers"]}],
             )

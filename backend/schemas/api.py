@@ -56,6 +56,10 @@ class RecommendationItem(BaseModel):
     color: str
     style: str
     reason: str = Field(description="Why this item was recommended")
+    owned: bool = Field(
+        default=False,
+        description="True when the user said they already own this item; shopping is skipped for it",
+    )
     products: list[ProductLink] = Field(
         default_factory=list,
         description="Matching products from online stores",
@@ -68,7 +72,11 @@ class Recommendation(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     items: list[RecommendationItem]
     overall_explanation: str = Field(
-        description="Rule-generated outfit explanation, optionally tone-refined by the LLM"
+        description="Outfit explanation grounded in the rule-engine evidence; LLM-worded when available"
+    )
+    evidence: list[str] = Field(
+        default_factory=list,
+        description="Rule-engine facts this recommendation is grounded in (the explanation may only cite these)",
     )
     style_tags: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0, default=0.8)
