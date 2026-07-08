@@ -96,5 +96,7 @@ async def analyze_clothing(
         )
     except Exception as exc:
         logger.warning("analysis_persist_failed", error=str(exc))
+        # Leave the session usable — the dependency commits on exit.
+        await db.rollback()
 
     return response
