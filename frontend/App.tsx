@@ -17,6 +17,7 @@ import LandingScreen from "./src/screens/LandingScreen";
 import AnalysisScreen from "./src/screens/AnalysisScreen";
 import ResultsScreen from "./src/screens/ResultsScreen";
 import CameraScreen from "./src/screens/CameraScreen";
+import WardrobeScreen from "./src/screens/WardrobeScreen";
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   Analysis: { imageUri: string };
   Results: undefined;
   Camera: undefined;
+  Wardrobe: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -78,6 +80,7 @@ export default function App() {
           />
           <Stack.Screen name="Results" component={ResultsScreen} />
           <Stack.Screen name="Camera" component={CameraScreen} />
+          <Stack.Screen name="Wardrobe" component={WardrobeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>

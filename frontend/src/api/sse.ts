@@ -3,10 +3,13 @@ import type { ShoppingIntent, StreamAnalysisResult } from "../types/api";
 
 export type AnalysisStage =
   | "start"
+  | "intent"
   | "vision"
   | "styling"
   | "recommendation"
-  | "shopping";
+  | "wardrobe"
+  | "shopping"
+  | "verifier";
 
 export interface StreamCallbacks {
   onStageStart: (stage: AnalysisStage, message: string) => void;
@@ -26,7 +29,8 @@ export function streamAnalysis(
   userId: string | undefined,
   callbacks: StreamCallbacks,
   shoppingIntent: ShoppingIntent = "unisex",
-  includeProducts: boolean = true
+  includeProducts: boolean = true,
+  userIntent?: string
 ): () => void {
   const abortController = new AbortController();
 
@@ -39,6 +43,7 @@ export function streamAnalysis(
       if (userId) params.set("user_id", userId);
       params.set("shopping_intent", shoppingIntent);
       params.set("include_products", String(includeProducts));
+      if (userIntent?.trim()) params.set("user_intent", userIntent.trim());
       const url = `${BASE_URL}/api/v1/analyze/stream?${params.toString()}`;
 
       const response = await fetch(url, {

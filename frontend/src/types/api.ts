@@ -4,7 +4,11 @@ export interface ClothingAttributes {
   secondary_color: string | null;
   pattern: string;
   style: string;
+  /** Confidence of the clothing-type detection (primary signal). */
   confidence: number;
+  color_confidence?: number;
+  pattern_confidence?: number;
+  style_confidence?: number;
   description: string;
   description_relevant: boolean;
 }
@@ -27,6 +31,10 @@ export interface RecommendationItem {
   color: string;
   style: string;
   reason: string;
+  /** True when the user already owns this item; shopping is skipped for it. */
+  owned?: boolean;
+  /** Wardrobe item that covers this piece, when matched from the closet. */
+  wardrobe_item_id?: string | null;
   products: ProductLink[];
 }
 
@@ -34,6 +42,8 @@ export interface Recommendation {
   id: string;
   items: RecommendationItem[];
   overall_explanation: string;
+  /** Rule-engine facts this recommendation is grounded in. */
+  evidence?: string[];
   style_tags: string[];
   confidence: number;
 }
@@ -93,4 +103,22 @@ export interface SSEResultData {
 
 export interface SSEDoneData {
   elapsed_s: number;
+}
+
+export interface WardrobeItem {
+  id: string;
+  label: string;
+  clothing_type: string;
+  color: string;
+  pattern: string;
+  style: string;
+  created_at: string | null;
+}
+
+export interface WardrobeItemUpdate {
+  label?: string;
+  clothing_type?: string;
+  color?: string;
+  pattern?: string;
+  style?: string;
 }

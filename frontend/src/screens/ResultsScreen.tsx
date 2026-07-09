@@ -1,4 +1,4 @@
-import React, { useCallback, memo } from "react";
+import React, { useCallback, useState, memo } from "react";
 import {
   View,
   Text,
@@ -62,11 +62,18 @@ const ColorDot = memo(function ColorDot({ colorName }: { colorName: string }) {
 
 const ClothingChip = memo(function ClothingChip({ item }: { item: RecommendationItem }) {
   return (
-    <View style={styles.chip}>
-      <ColorDot colorName={item.color} />
-      <Text style={styles.chipText}>
-        {item.color} {item.item_type.replace(/_/g, " ")}
-      </Text>
+    <View style={styles.chipRow}>
+      <View style={styles.chip}>
+        <ColorDot colorName={item.color} />
+        <Text style={styles.chipText}>
+          {item.color} {item.item_type.replace(/_/g, " ")}
+        </Text>
+      </View>
+      {item.owned && (
+        <View style={styles.ownedBadge}>
+          <Text style={styles.ownedBadgeText}>👔 In your wardrobe</Text>
+        </View>
+      )}
     </View>
   );
 });
@@ -136,6 +143,8 @@ const OutfitCard = memo(function OutfitCard({
   const setFeedback = useAppStore((s) => s.setFeedback);
   const userId = useAppStore((s) => s.userId);
   const given = feedbackGiven[recommendation.id];
+  const [showEvidence, setShowEvidence] = useState(false);
+  const evidence = recommendation.evidence ?? [];
 
   const handleFeedback = useCallback(
     async (fb: "like" | "dislike") => {
@@ -214,6 +223,29 @@ const OutfitCard = memo(function OutfitCard({
             {recommendation.overall_explanation}
           </Text>
         </View>
+
+        {/* Grounded evidence — the rule facts behind this look */}
+        {evidence.length > 0 && (
+          <View style={styles.evidenceSection}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowEvidence((v) => !v);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.evidenceToggle}>
+                {showEvidence ? "▾ Why this look" : "▸ Why this look"}
+              </Text>
+            </TouchableOpacity>
+            {showEvidence &&
+              evidence.map((fact, i) => (
+                <Text key={i} style={styles.evidenceFact}>
+                  • {fact}
+                </Text>
+              ))}
+          </View>
+        )}
 
         {/* Feedback buttons */}
         <View style={styles.feedbackRow}>
@@ -407,6 +439,41 @@ export default function ResultsScreen() {
 }
 
 const styles = StyleSheet.create({
+  chipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  ownedBadge: {
+    backgroundColor: "rgba(74, 222, 128, 0.12)",
+    borderColor: "rgba(74, 222, 128, 0.35)",
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  ownedBadgeText: {
+    ...typography.label.sm,
+    fontSize: 11,
+    color: "#4ade80",
+  },
+  evidenceSection: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.surface.border,
+    paddingTop: spacing.sm,
+  },
+  evidenceToggle: {
+    ...typography.label.sm,
+    color: colors.brand[300],
+  },
+  evidenceFact: {
+    ...typography.body.xs,
+    color: colors.text.tertiary,
+    marginTop: 4,
+    lineHeight: 16,
+  },
   container: {
     flex: 1,
   },

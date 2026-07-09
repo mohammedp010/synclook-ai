@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TextInput,
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -47,6 +48,8 @@ export default function HomeScreen() {
   const setShoppingIntent = useAppStore((s) => s.setShoppingIntent);
   const includeProducts = useAppStore((s) => s.includeProducts);
   const setIncludeProducts = useAppStore((s) => s.setIncludeProducts);
+  const userIntent = useAppStore((s) => s.userIntent);
+  const setUserIntent = useAppStore((s) => s.setUserIntent);
 
   // Floating animation for illustration
   const floatY = useSharedValue(0);
@@ -158,11 +161,33 @@ export default function HomeScreen() {
                   >
                     <Text style={styles.secondaryBtnText}>📷  Take a Photo</Text>
                   </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      navigation.navigate("Wardrobe");
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.secondaryBtnText}>👔  My Wardrobe</Text>
+                  </TouchableOpacity>
                 </View>
               </AnimatedEntry>
 
               <AnimatedEntry index={4}>
                 <View style={styles.settingsCard}>
+                  <Text style={styles.settingsLabel}>Styling request (optional)</Text>
+                  <TextInput
+                    style={styles.intentInput}
+                    value={userIntent}
+                    onChangeText={setUserIntent}
+                    placeholder='e.g. "rainy dinner under ₹5,000" or "office-safe streetwear"'
+                    placeholderTextColor={colors.text.tertiary}
+                    multiline={false}
+                    returnKeyType="done"
+                  />
+
                   <Text style={styles.settingsLabel}>Shopping intent</Text>
                   <View style={styles.pillRow}>
                     {SHOPPING_INTENT_OPTIONS.map((opt) => {
@@ -403,6 +428,16 @@ const styles = StyleSheet.create({
     marginTop: IS_WIDE_LAYOUT ? 24 : spacing.xl,
     width: "100%",
     gap: IS_WIDE_LAYOUT ? 18 : spacing.md,
+  },
+  intentInput: {
+    ...typography.body.sm,
+    color: colors.text.primary,
+    backgroundColor: colors.surface.tertiary,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.surface.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: IS_WIDE_LAYOUT ? 12 : spacing.sm + 2,
   },
   settingsLabel: {
     ...typography.label.sm,

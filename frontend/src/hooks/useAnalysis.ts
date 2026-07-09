@@ -12,11 +12,16 @@ export interface StageState {
   message: string;
 }
 
+// The graph decides at runtime whether wardrobe/shopping run, so stages the
+// stream never mentions are dropped from the display when the run completes.
 const INITIAL_STAGES: StageState[] = [
+  { stage: "intent", status: "pending", message: "Understanding your request..." },
   { stage: "vision", status: "pending", message: "Analyzing image..." },
   { stage: "styling", status: "pending", message: "Generating style matches..." },
   { stage: "recommendation", status: "pending", message: "Building recommendations..." },
+  { stage: "wardrobe", status: "pending", message: "Checking your wardrobe..." },
   { stage: "shopping", status: "pending", message: "Finding products online..." },
+  { stage: "verifier", status: "pending", message: "Quality-checking recommendations..." },
 ];
 
 function mergeUniqueMessages(existing: string[], incoming: string[]): string[] {
@@ -41,6 +46,7 @@ export function useAnalysis() {
   const userId = useAppStore((s) => s.userId);
   const shoppingIntent = useAppStore((s) => s.shoppingIntent);
   const includeProducts = useAppStore((s) => s.includeProducts);
+  const userIntent = useAppStore((s) => s.userIntent);
   const setLastAnalysis = useAppStore((s) => s.setLastAnalysis);
   const setLastWarnings = useAppStore((s) => s.setLastWarnings);
   const addToHistory = useAppStore((s) => s.addToHistory);
@@ -89,6 +95,9 @@ export function useAnalysis() {
         onDone: (elapsedSeconds) => {
           setElapsed(elapsedSeconds);
           setStatus("done");
+          // Drop stages the planner never routed through (e.g. wardrobe
+          // without a user, shopping when the intent declined it).
+          setStages((prev) => prev.filter((s) => s.status !== "pending"));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
         onError: (stage, errMsg) => {
@@ -109,7 +118,7 @@ export function useAnalysis() {
             return merged;
           });
         },
-      }, shoppingIntent, includeProducts);
+      }, shoppingIntent, includeProducts, userIntent);
 
       cancelRef.current = cancel;
     },
@@ -117,6 +126,7 @@ export function useAnalysis() {
       userId,
       shoppingIntent,
       includeProducts,
+      userIntent,
       updateStage,
       setLastAnalysis,
       setLastWarnings,

@@ -28,13 +28,14 @@ import { wp, scale, scrollContent, isWeb } from "../utils/responsive";
 
 const STAGE_MAP: Record<string, { label: string }> = {
   start:          { label: "Starting analysis" },
+  intent:         { label: "Understanding your request" },
   vision:         { label: "Analyzing clothing" },
   styling:        { label: "Matching style rules" },
   recommendation: { label: "Crafting outfit suggestions" },
+  wardrobe:       { label: "Checking your wardrobe" },
   shopping:       { label: "Finding products" },
+  verifier:       { label: "Quality-checking looks" },
 };
-
-const STAGE_ORDER = ["vision", "styling", "recommendation", "shopping"];
 
 export default function AnalysisScreen() {
   const navigation = useNavigation<any>();
@@ -84,8 +85,11 @@ export default function AnalysisScreen() {
     }
   }, [status, result, navigation]);
 
+  // Progress over the stages the planner actually routes through: pending
+  // stages are dropped from the list when the stream finishes, and until
+  // then the denominator is simply the full displayed list.
   const doneCount = stages.filter((s) => s.status === "done").length;
-  const progress = doneCount / STAGE_ORDER.length;
+  const progress = stages.length > 0 ? doneCount / stages.length : 0;
 
   return (
     <GlowBackground>

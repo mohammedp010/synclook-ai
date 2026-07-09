@@ -14,6 +14,10 @@ interface AppState {
   includeProducts: boolean;
   setIncludeProducts: (includeProducts: boolean) => void;
 
+  // Free-text styling request, e.g. "office party under 5000"
+  userIntent: string;
+  setUserIntent: (userIntent: string) => void;
+
   // Current image
   currentImage: string | null;
   setCurrentImage: (uri: string | null) => void;
@@ -40,7 +44,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  userId: null,
+  // Default identity so wardrobe matching and preference memory work in the
+  // demo without a login flow; replaced when real auth lands.
+  userId: "demo-user",
   setUserId: (id) => set({ userId: id }),
 
   shoppingIntent: "unisex",
@@ -48,6 +54,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   includeProducts: true,
   setIncludeProducts: (includeProducts) => set({ includeProducts }),
+
+  userIntent: "",
+  setUserIntent: (userIntent) => set({ userIntent }),
 
   currentImage: null,
   setCurrentImage: (uri) => set({ currentImage: uri }),
