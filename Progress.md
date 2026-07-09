@@ -725,10 +725,12 @@ Executed against the approved upgrade plan (see git history from `Initial commit
 - Langfuse tracing is wired but needs cloud keys (free tier) to see real traces — **user signup needed**
 - Auth hardening + trend RAG are unblocked next steps
 
-### 🟨 Phase 6: Portfolio packaging — README + ADRs done; frontend pending
+### ✅ Phase 6: Portfolio packaging (GitHub publish still needs user auth)
 - README rewritten: architecture (mermaid), measured before/after table, honest findings, run instructions
 - ADRs in `docs/adr/`: 001 LangGraph, 002 no-vector-DB-yet, 003 LLM-proposes-rules-verify, 004 model choices
-- Frontend work pending: `user_intent` text input, wardrobe screens, evidence viewer; **GitHub publish blocked on `gh` auth**
+- Frontend aligned: styling-request input on Home, My Wardrobe screen (add/fix-tags/remove), "In your wardrobe" badges + "Why this look" evidence viewer on Results, full graph stage list on Analysis (planner-skipped stages drop away); `tsc --noEmit` clean, web export bundles
+- `HANDOFF.md` added: before/after change log + pre-testing checklist
+- **GitHub publish blocked on `gh` auth** (user action)
 
 ---
 
@@ -772,4 +774,4 @@ Executed against the approved upgrade plan (see git history from `Initial commit
 
 ---
 
-*Last updated: 9 July 2026 — Phases 0-4 complete + README/ADRs (`226 passed`, eval gate green, strict mypy clean). Next: frontend intent/wardrobe UI, auth, trend RAG, try-on decision.*
+*Last updated: 9 July 2026 — Phases 0-4 + 6 complete (`226 passed`, eval gate green, strict mypy clean, frontend tsc clean). See `HANDOFF.md` for the testing checklist. Next: auth hardening, trend RAG, try-on decision, OWLv2 multi-garment.*
