@@ -103,6 +103,99 @@ missing pieces. CRUD at `/api/v1/wardrobe/items`; manual tag corrections support
   full pipeline stage list on the Analysis screen (planner-skipped stages drop away).
   Verified: `tsc --noEmit` clean, web export bundles.
 
+### Environment repair + live shopping fix (Phase A, `1cc357e`)
+- **`transformers` v5 broke CLIP pooling** — `.pooler_output` on the text tower returns the
+  pre-projection state in v5. Every text embedding was silently the wrong tensor. Pinned and
+  corrected; the zero-shot heads were re-measured afterwards, not assumed.
+- **Live shopping returned zero products** — the CLIP text↔image similarity gate compared raw
+  cosine (which lives in a ~0.2–0.35 band across modalities) against a 0.75 threshold, so real
+  provider results were always rejected. Fixture thumbnails were fake, which is why the tests
+  never caught it. Gate now scores on the same taxonomy heads the vision pipeline uses.
+- **Thumbnail fetches were missing a user-agent** — Wikimedia and several retail CDNs answer 403
+  to the default httpx UA, so those thumbnails silently never embedded. Affects the live shopping
+  path, not just ingestion.
+
+### Product catalog RAG (Phase B, `8914a4e`)
+- **pgvector 0.8.0** compiled against `postgresql@15`; migration `c3f81a2b7d64` adds
+  `product_catalog_items` with a 384-dim BGE text vector, a 512-dim CLIP image vector, HNSW
+  cosine indexes on both, and a `GENERATED ALWAYS` tsvector (title/brand weighted above
+  description) behind a GIN index.
+- **Hybrid retrieval** (`backend/services/product_catalog.py`) — BM25-style lexical arm +
+  vector arm fused with Reciprocal Rank Fusion (k=60), then reranked by a
+  `ms-marco-MiniLM-L-6-v2` cross-encoder whose sigmoid output is a calibrated relevance
+  probability; `catalog_min_score=0.5` was set from measured scores, not guessed.
+- **Ingestion job** (`python -m backend.jobs.catalog_ingest`) — a type×gender query grid, price
+  parsing, dedup, taxonomy classification, a coarse image veto (upper body / lower body / feet /
+  accessory — the granularity CLIP can actually support), and `--export` / `--from-file` so a
+  catalog can be rebuilt without spending SerpAPI credits.
+- **ShoppingAgent retrieves before it searches** — catalog first, live provider only for slots
+  the catalog could not fill. Falls back completely and silently if PostgreSQL is unreachable.
+- **New eval** `evaluation/catalog_retrieval.py`: recall@k / precision@k / MRR across four arms,
+  reported with taxonomy filters both on and off. Measured at k=3, filters off: lexical 0.630,
+  semantic 0.815, hybrid RRF 0.778, hybrid+rerank **0.852**. The RRF regression is real and is
+  written up in [ADR 005](docs/adr/005-catalog-rag-hybrid-retrieval.md).
+- CI now runs a `pgvector/pgvector:pg16` service container, applies migrations, and runs the
+  retrieval eval.
+
+### Eval history + quality dashboard (Phase C, `0d8376a`)
+- **The intent-adherence judge was measuring nothing.** Every sampled case was scored against a
+  hardcoded `"office day"`, so gym and beach looks were counted as failures and the metric sat at
+  0.667 regardless of system behaviour. `evaluation/llm_judge.py` now rotates one natural-language
+  request per recognised occasion through the real `IntentAgent` → `StylingAgent` →
+  `RecommendationAgent` path and judges against the occasion the system itself extracted.
+- **That fix immediately caught a production bug.** The LLM sometimes returns
+  `occasion='wedding'` with `preferred_styles=[]`; styling then fell back to the *detected
+  garment's* style, so a wedding request produced smart-casual jeans. `intent_agent` now backfills
+  the style an occasion implies from the same keyword table the heuristic extractor uses
+  (`style_lean_for_occasion`). Wedding → formal, jeans → trousers. Adherence **0.667 → 0.875**.
+- **`evaluation_runs` is now shared history.** `EvaluationRun` gained a `suite` column (migration
+  `d7a41e60b9c2`) and `evaluation/recording.py` centralises best-effort recording; all four suites
+  take `--record`. Recording never fails a run — a broken database loses history, not results.
+- **`GET /api/v1/admin/dashboard`** — one self-contained HTML template (no CDN, no charting
+  library) over `/admin/metrics`: system counters plus, per suite, hand-drawn SVG sparklines for
+  metrics that moved and a compact table for those that did not.
+- 289 tests. Ruff and strict mypy clean; mypy in CI now covers `evaluation/` too, which needed
+  `evaluation/__init__.py` and a typed `CalibrationCase`.
+
+### Retrieval evidence in the UI (2026-09-13)
+- Products now explain themselves the way looks do. Each product carries
+  `match_evidence` — which arm retrieved it and at what rank, whether the arms agreed, and the
+  cross-encoder score (or the fusion rank, when the reranker is unavailable).
+- **What you'll see:** a `% relevant` line on each product card, and a **"Why these products"**
+  toggle under each outfit slot's product row. Catalog hits show retrieval ranks; live-search
+  products show their zero-shot gate facts.
+- No eval metric moved, and none should have — retrieval order is unchanged; this only stops
+  discarding the reasons for it.
+
+### Availability freshness (2026-09-13)
+- **New:** `poetry run python -m backend.jobs.catalog_ingest --refresh --max-queries 10`.
+  It re-queries the slots already in the catalog, refreshes price/copy/`last_seen_at` for whatever
+  still comes back, and marks the rest out of stock. **One SerpAPI credit per slot** — `--max-queries`
+  is the budget cap.
+- Retrieval now ignores rows last confirmed more than `CATALOG_STALE_AFTER_DAYS` days ago
+  (default 30; set 0 to disable). A stale corpus falls back to live search rather than serving
+  stock claims nobody has verified.
+- Products carry a `Stock confirmed N days ago` line in their evidence, so "in stock" reads as a
+  dated observation.
+- Retrieval quality is unchanged — recall@3 reproduces the baseline exactly (0.630 / 0.815 /
+  0.778 / 0.852).
+
+### Update: the catalog now has a real corpus
+- The `SERPAPI_API_KEY` truncation issue is fixed — `.env` now holds a valid 64-character key.
+  A real `--grid` ingest has run: `product_catalog_items` holds **5 rows** (`source='serpapi'`),
+  exported to `data/catalog_seed.json` so the corpus can be rebuilt for free from here on. The
+  0.852 recall figure is still measured from the eval's own temporary `source='eval'` rows, not
+  this corpus — 5 products is too small a base for a meaningful retrieval eval. Growing the real
+  corpus (`catalog_ingest --grid --max-queries N --export data/catalog_seed.json`) is worth doing
+  before trusting shopping results against it end-to-end.
+
+### Still open after Phase C
+- ~~**No occasion-specific colour policy.**~~ Re-measured 2026-09-13 before building it: a judged
+  run scored faithfulness 1.0 / adherence 1.0 with zero misses, and a deterministic sweep of all
+  105 eval cases through *"going to a wedding"* produced **0 all-white looks** (per-slot colour
+  rotation already forces a non-white anchor). The Phase C miss was sample-dependent. No rule was
+  written — details and the reproducer in [Progress.md](Progress.md) under *Open items*.
+
 ---
 
 ## 3. What YOU need to do before testing
@@ -124,6 +217,8 @@ missing pieces. CRUD at `/api/v1/wardrobe/items`; manual tag corrections support
    - `SERPAPI_API_KEY` — set it if you want real product links; without it the shopping stage
      is skipped by the planner (that's expected behavior, not a bug).
    - `DATABASE_URL=postgresql+asyncpg://mohd@localhost:5432/synclook`
+   - Catalog retrieval needs no key, but it does need the pgvector migration applied:
+     `poetry run alembic upgrade head`. With an empty catalog it is a no-op.
 
 3. **Start the backend**:
    ```bash
@@ -178,6 +273,11 @@ missing pieces. CRUD at `/api/v1/wardrobe/items`; manual tag corrections support
   testing; auth hardening is the next backend task.
 - **Virtual try-on** — needs your decision on a paid diffusion API (fal.ai or Replicate,
   ~₹3–8/image) before I build it.
-- **Trend-aware RAG mode** and **multi-garment detection (OWLv2)** — designed, not yet built.
+- **The catalog corpus is small** — a real ingest has run (5 rows, `data/catalog_seed.json`), but
+  a 5-product corpus is too small to trust shopping results end-to-end. Growing it spends SerpAPI
+  credits, so a bigger grid is yours to run: `poetry run python -m backend.jobs.catalog_ingest
+  --grid --max-queries 20 --export data/catalog_seed.json`.
+- **Trend-aware RAG mode** (catalog retrieval now exists; ranking by trend signal does not)
+  and **multi-garment detection (OWLv2)** — designed, not yet built.
 - **iOS/Android native builds** — web verified; simulator runs still need Xcode/Android SDK
   setup on this machine (pre-existing blocker from Step 24).

@@ -734,6 +734,196 @@ Executed against the approved upgrade plan (see git history from `Initial commit
 
 ---
 
+## 2.0 Sprint (September 2026)
+
+### ✅ Phase A: Environment repair + live shopping fix
+- `transformers` v5 changed what `.pooler_output` returns on CLIP's text tower — every text
+  embedding was the wrong tensor. Corrected, then the zero-shot heads were re-measured.
+- Live shopping had been returning **zero products**: the text↔image similarity gate compared a
+  raw cross-modal cosine (~0.2–0.35 in practice) against a 0.75 threshold. Fixture thumbnails
+  were fabricated, which is why no test caught it.
+- Thumbnail fetches now send a user-agent; several CDNs (Wikimedia among them) answer 403 to
+  httpx's default, silently dropping those images from the ranking signal.
+- Full environment green: ruff, ruff-format, strict mypy, pytest, both eval gates.
+
+### ✅ Phase B: Product catalog RAG (theme 3 of `Progress-2.0.md`)
+- **Schema** — migration `c3f81a2b7d64`: `product_catalog_items` with a 384-dim BGE text vector,
+  a 512-dim CLIP image vector, HNSW cosine indexes on both, and a `GENERATED ALWAYS` tsvector
+  (title/brand weighted above description) behind a GIN index. pgvector 0.8.0 built against
+  `postgresql@15` locally; `pgvector/pgvector:pg16` service container in CI.
+- **Retrieval** — `ProductCatalogService`: lexical arm (`websearch_to_tsquery` + `ts_rank_cd`) and
+  vector arm fused by Reciprocal Rank Fusion (k=60), reranked by a `ms-marco-MiniLM-L-6-v2`
+  cross-encoder. Sigmoid of the single logit is a calibrated probability, which is what makes
+  `catalog_min_score=0.5` a measured threshold rather than a guess.
+- **Ingestion** — `python -m backend.jobs.catalog_ingest`: type×gender query grid, price parsing,
+  dedup, taxonomy classification from the product's own title, a coarse image veto (upper body /
+  lower body / feet / accessory — the granularity CLIP actually supports), `--export`/`--from-file`
+  so a catalog can be rebuilt without spending SerpAPI credits.
+- **Wiring** — `ShoppingAgent` queries the catalog first and calls the live provider only for
+  slots the catalog could not fill, with the *same* query text on both paths so the two are
+  comparable. Degrades silently to the old behaviour if PostgreSQL is unreachable.
+- **Measured** (`evaluation/catalog_retrieval.py`, 10 queries over the 53-product corpus, k=3,
+  taxonomy filters off): lexical 0.630 · semantic 0.815 · hybrid RRF 0.778 · **hybrid + rerank
+  0.852** recall. RRF *underperforming* the semantic arm is an honest negative result, written up
+  in `docs/adr/005`; ADR 002 is now marked superseded in part.
+- No regressions: product_relevance F1 0.893 / 0.839 unchanged, harness gate passes,
+  strict mypy clean.
+- **Left to the user, partially done:** a real `--grid` ingest has run (5 rows, `source='serpapi'`,
+  exported to `data/catalog_seed.json`) — too small a corpus to trust shopping results against
+  end-to-end, but the truncated-key blocker is resolved. Growing it is the next step.
+
+### ✅ Phase C: Eval history + quality dashboard
+- **Fixed the adherence judge.** It scored every sampled case against a hardcoded `"office day"`,
+  so the metric was pinned at 0.667 regardless of behaviour. `evaluation/llm_judge.py` now rotates
+  one natural-language request per recognised occasion through the real
+  `IntentAgent → StylingAgent → RecommendationAgent` path and judges against the occasion the
+  system extracted, and reports the misses with enough context to debug them.
+- **The fixed metric found a real bug.** The LLM sometimes returns `occasion='wedding'` with
+  `preferred_styles=[]`, and styling then fell back to the detected garment's style — a wedding
+  request came back smart-casual, with jeans. `style_lean_for_occasion()` backfills the implied
+  style from the same keyword table the heuristic extractor uses. Adherence **0.667 → 0.875**.
+- **Eval history** — `EvaluationRun.suite` (migration `d7a41e60b9c2`) lets all four suites share
+  one table; `evaluation/recording.py` centralises `--record`, always best-effort so a database
+  problem loses history rather than the run.
+- **Dashboard** — `GET /api/v1/admin/dashboard`: one self-contained HTML template over
+  `/admin/metrics`, hand-drawn SVG sparklines for metrics that moved, a table for the rest. No
+  CDN, no charting library, excluded from the OpenAPI schema.
+- 289 tests, strict mypy clean; CI type-checks `evaluation/` too.
+- **Re-measured 2026-09-13, and the "still open" item did not survive it.** See the occasion
+  colour policy entry under *Open items* below: the wedding miss does not reproduce.
+  **Left to the user:** Langfuse cloud keys.
+
+### ⏭ Phase D: Publish + first CI run (next up)
+
+**State at the end of Phase C (2026-09-13).** Everything from Phases A, B and C is **complete but
+uncommitted** — 39 paths on `main`, no GitHub remote configured, so **CI has never once executed**.
+Phase D is what makes the repo real: commit, publish, watch the workflow run, fix whatever only
+shows up on a clean Ubuntu runner.
+
+Steps, in order:
+
+1. ~~**`brew install gh && gh auth login`**~~ — **done 2026-09-15**, authenticated as `mohammedp010`.
+2. ~~**Commit the 2.0 work.**~~ **Done 2026-09-15**, split into 4 commits: Phase A (live-shopping
+   gate fix + thumbnail/SerpAPI hardening), Phase B (catalog RAG — schema, retrieval, ingestion,
+   ADR 005, and the entangled shopping-agent gate fix + catalog wiring + evidence UI, which shared
+   one file too tightly to hand-split further), Phase C (eval history, dashboard, judge fix, intent
+   occasion backfill), then docs. `graphify-out/`, `.claude/`, and `CLAUDE.md` are gitignored —
+   decided to keep local Claude Code tooling config (including a local
+   `ANTHROPIC_BASE_URL=http://127.0.0.1:8787`) out of the public repo; the `graphifyy` dev
+   dependency was dropped from `pyproject.toml`/`poetry.lock` for the same reason (the `graphify`
+   CLI runs from `~/.local/bin`, independent of this project's Poetry env).
+3. **`gh repo create` + push**, then watch the first Actions run. Expect the runner, not the code,
+   to be the problem: the workflow pulls a `pgvector/pgvector:pg16` service container, applies
+   migrations, and downloads CLIP + BGE + the MiniLM cross-encoder into the HF cache (cache key
+   `hf-clip-bge-minilm-v1`). First run is slow and the model download is the likeliest failure.
+4. **Sanity-check the public face** once it renders on GitHub: the README Mermaid diagram, the
+   ADR links, and that no `.env` value ever entered a commit.
+
+**Local verification before any of that** (all currently green):
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+poetry run ruff check backend/ tests/ evaluation/
+poetry run ruff format --check backend/ tests/ evaluation/
+poetry run mypy backend/ evaluation/        # strict, 66 files
+poetry run python -m pytest tests/ -q       # 289 tests, no DB/API/models needed
+poetry run python evaluation/harness.py --check
+```
+`brew services start postgresql@15 redis` first if you want `evaluation/catalog_retrieval.py`.
+
+### Open items, in the order they are worth doing
+
+1. ~~**Occasion colour policy**~~ — **closed 2026-09-13 without writing the rule; the premise did
+   not reproduce.** Phase C recorded one adherence miss ("all-white/cream outfit risks upstaging
+   the bride") and proposed a per-occasion forbidden-colour table. Re-measured before building it:
+   - `evaluation/llm_judge.py --sample 6`: faithfulness **1.0**, adherence **1.0**, zero misses.
+     The Phase C miss was sample-dependent, not a standing defect.
+   - A deterministic sweep of all 105 eval cases through *"going to a wedding"* (heuristic intent,
+     no API): **0 all-white looks**. Colour rotation per slot (`_pick_category_match`'s
+     `color_offset`) already guarantees a non-white anchor; 35/105 are white-*dominant* (3 of 4
+     slots), none total.
+   - The naive version of the rule would also have been wrong: banning white at a wedding bans the
+     white dress shirt, which is wedding-guest standard. The real convention is about a
+     *predominantly* white outfit, which the pipeline does not currently produce.
+
+   A rule was deliberately not written: it would have guarded a failure mode with no measured
+   instances, in a codebase whose framing is "measured, not claimed". Revisit only if a judged run
+   surfaces the miss again; the cheap reproducer is ~40 lines — push every case in
+   `evaluation/test_cases.json` through `IntentAgent → StylingAgent → RecommendationAgent` with
+   `user_intent_text="going to a wedding"` (no LLM, so intent falls back to the heuristic) and
+   count looks whose base colour and every item colour land in {white, cream, beige}.
+2. ~~**Retrieval evidence in the frontend** (open from theme 3).~~ **Done 2026-09-13.** Retrieval
+   provenance now survives from the retriever to the screen:
+   - `fuse_by_rank` collapses per-arm ranks by design, so `arm_ranks()` recovers them from the two
+     input lists *before* fusion and `retrieval_evidence()` turns them into user-readable facts
+     ("Keyword search ranked it #2" · "Vector search ranked it #1" · "Both retrieval arms agreed on
+     it" · "Cross-encoder relevance 0.87"). With the reranker off, the last line becomes
+     "Ranked #4 by rank fusion (reranker unavailable)" — the degradation stays visible instead of
+     silently looking like a rerank.
+   - `CatalogHit.evidence` → `ProductLink.match_evidence` (new field, defaults to `[]` so
+     Redis-cached product JSON from before this change still deserializes). The live shopping path
+     fills the same field from its own gates, so a product is explained the same way whether it came
+     from the catalog or from a provider.
+   - UI: a `% relevant` line on each product card and an expandable **"Why these products"** toggle
+     per outfit slot, mirroring the existing "Why this look" evidence pattern.
+
+   **Measurement:** none of the four suites moved, and none should have — this is plumbing plus
+   rendering, not a ranking change. `harness.py --check` still passes (105 cases, 0.0 invalid-item /
+   intent-mismatch / duplicate rates, complete-outfit 1.0). Test count 269 → 274: the five new cases
+   cover both-arms evidence, single-arm evidence, the reranker-unavailable fallback, `arm_ranks`
+   positions, and the catalog-hit → `ProductLink` hop.
+3. ~~**Availability freshness** (open from theme 3).~~ **Done 2026-09-13.** An ingested row used to
+   assert "buyable" forever; now the claim has an expiry and a way to renew it.
+   - **Renewing it:** `catalog_ingest --refresh` re-queries the slots the corpus already holds
+     (`distinct_slots`, so no credits are spent confirming the absence of rows that never existed).
+     Products that come back are upserted, which rolls `last_seen_at` forward.
+   - **Expiring it:** `_filtered` now also requires `last_seen_at` inside `catalog_stale_after_days`
+     (default 30, 0 disables). An un-refreshed corpus therefore ages out into live search instead of
+     serving stock claims nothing has checked in months.
+   - **The trap avoided:** demoting every product missing from one search would empty the corpus a
+     little more on each run — providers paginate, reorder and personalise, so absence from one
+     query is weak evidence. `deactivate_unseen` demotes only rows that are *both* absent now *and*
+     already past the freshness window, and a failed provider query touches nothing at all.
+
+   **Measurement:** `catalog_retrieval.py --k 3` re-run after the change reproduces the recorded
+   baseline exactly — retrieval-only recall@3 lexical 0.630 · semantic 0.815 · hybrid 0.778 ·
+   reranked 0.852 — so the freshness clause costs no recall. It could not have: the eval ingests
+   its own rows, which are new. That is the honest limit of this measurement, and the reason the
+   demotion guards are covered by compiled-SQL tests instead. Tests 274 → 289.
+
+   **Not yet run against real data at scale.** A real `--grid` ingest has landed 5 rows, so
+   `--refresh` can now process a real provider response, but that has not happened yet — a 5-row
+   corpus is worth growing before spending refresh credits on it.
+4. **Themes 5 (fit/size), 6 (budget agent), 7 (trend mode)** from `Progress-2.0.md`. Take them one
+   at a time, each with its own eval, the way B and C were done.
+5. **Virtual try-on (theme 4) last** — blocked on the user funding a fal.ai or Replicate key.
+
+### Blocked on the user (do not attempt these for them)
+
+- ~~**`gh auth login`**~~ — **done 2026-09-15.** Authenticated as `mohammedp010`; Phase D proceeded.
+- **Langfuse cloud keys** — sign up at cloud.langfuse.com, add `LANGFUSE_PUBLIC_KEY` /
+  `LANGFUSE_SECRET_KEY` to `.env`. The only Phase C item still outstanding; tracing no-ops
+  without them, which is why per-request cost is the one dashboard metric still missing.
+- **Growing the catalog corpus.** The truncated-key blocker is resolved and a real `--grid` ingest
+  has run — `product_catalog_items` holds 5 rows (`source='serpapi'`), exported to
+  `data/catalog_seed.json` so future rebuilds are free. But 5 rows is far short of what shopping
+  needs to lean on the catalog in practice; a bigger grid (`--max-queries 20` or more) spends the
+  user's paid SerpAPI credits, so that call stays theirs. The image veto also remains unverified
+  against real provider thumbnails at any meaningful scale.
+- **Committing and pushing** — only when asked. (Commits and the GitHub publish below were asked
+  for on 2026-09-15.)
+
+### Conventions a new agent should keep
+
+- Every behaviour change lands with a measurement. Four suites exist (`harness.py`,
+  `product_relevance.py`, `catalog_retrieval.py`, `llm_judge.py`); all take `--record`, which
+  appends to `evaluation_runs` tagged with suite + git SHA and shows up at
+  `/api/v1/admin/dashboard`. Record a baseline *before* changing anything.
+- Negative results stay in the docs. ADR 005's RRF regression and the CLIP blazer/blouse finding
+  are load-bearing for the "measured, not claimed" framing — do not quietly tidy them away.
+- After changing code, run `graphify update .` (see `CLAUDE.md`).
+
+---
+
 ## Key Files Quick Reference
 
 | What | File | Key exports |

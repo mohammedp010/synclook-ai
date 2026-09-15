@@ -19,7 +19,8 @@ flowchart TD
     S --> R[RecommendationAgent<br/>structure-driven looks + rule evidence<br/>LLM words the explanation from evidence only]
     R -->|identified user| W[WardrobeAgent<br/>tag-gated, embedding-ranked closet match<br/>marks items owned]
     R -->|conditional edge| SH
-    W --> SH[ShoppingAgent<br/>SerpAPI products → zero-shot CLIP gates<br/>type · color · gender + similarity ranking]
+    W --> SH[ShoppingAgent<br/>catalog RAG first: hybrid retrieval + rerank<br/>uncovered slots → SerpAPI + zero-shot CLIP gates]
+    SH -.-> C[(Product catalog<br/>pgvector HNSW + tsvector GIN<br/>BGE embeddings · ingested offline)]
     W -->|intent declines shopping| VF
     SH --> VF[VerifierAgent<br/>completeness · policy · budget · claim checks<br/>+ optional LLM critic]
     VF -->|fixable issues, exactly 1 rebuild| R
@@ -46,16 +47,32 @@ deterministic behavior. The rule engine went from *being the product* to being t
 | Empty-recommendation rate (105-case grid) | 8.6% | **0.0%** |
 | Product-match F1 (53 labeled products) | 0.839 (keyword matcher) | **0.893** (zero-shot CLIP gates) |
 | Product-match precision | 0.743 | **0.862** |
+| Catalog retrieval recall@3 (10 queries, taxonomy filters off) | 0.630 (lexical) / 0.815 (semantic) | **0.852** (hybrid + cross-encoder) |
 | Explanation faithfulness (LLM-judged) | 0.5 | **1.0** (occasion grounded in evidence) |
+| Intent adherence (LLM-judged, 8 occasions) | 0.667 | **0.875** (occasion style backfilled) |
 | Strict mypy errors | 28 | **0** |
 
-Two honest findings the evals surfaced along the way:
+Five honest findings the evals surfaced along the way:
 
 - Naive spec-vs-title cosine similarity scored **worse** than the keyword baseline (F1 0.81 vs
   0.84) — CLIP's text encoder is not a sentence-similarity model. Classifying titles against the
   catalog taxonomy (the same zero-shot heads the vision pipeline uses) is what wins.
 - The first LLM-judge run caught the explanation generator citing the user's occasion without it
   being in the evidence — a real grounding bug, fixed by making the occasion an explicit fact.
+- Rank fusion **cost** recall once the taxonomy filters were removed: hybrid RRF scored 0.778
+  against the semantic arm's 0.815, because product titles and outfit specs share few exact terms
+  and RRF pulls the strong arm toward the weak one. With the filters on it wins instead — so the
+  eval reports both, and the cross-encoder (0.852) is what is ahead under either.
+  See [ADR 005](docs/adr/005-catalog-rag-hybrid-retrieval.md).
+- The adherence judge was scoring every look — gym clothes included — against one hardcoded
+  "office day", which pinned the metric at 0.667 no matter what the system did. Rotating one real
+  request per occasion through the production intent agent made the metric mean something, and it
+  immediately failed a wedding request: the extractor returns `occasion='wedding'` with no style,
+  so styling fell back to the detected garment and proposed jeans. Occasion now backfills the
+  style it implies (0.667 → 0.875).
+- CLIP cannot tell a blazer from a blouse in a photograph (it reads a real blazer as `blouse` at
+  0.39 confidence), so ingestion's image check gates on *where a garment is worn* — upper body,
+  lower body, feet, accessory — which is a distinction the same model does make reliably.
 
 ## Evaluation & observability
 
@@ -64,27 +81,33 @@ Two honest findings the evals surfaced along the way:
   with the git SHA.
 - `evaluation/product_relevance.py` — labeled product fixtures; reports both matchers so every
   ranking change has a before/after.
+- `evaluation/catalog_retrieval.py` — ranking metrics (recall@k, precision@k, MRR) for four
+  retrieval configurations, run with the taxonomy filters on and off so the retriever's own
+  contribution is visible. Runs against a real PostgreSQL in CI.
 - `evaluation/llm_judge.py` — calibration-gated LLM judge for explanation faithfulness and intent
   adherence (scores withheld if the judge can't separate hand-crafted good/bad pairs).
 - Langfuse tracing (optional): a trace per analysis, agent-typed spans, per-generation token usage.
 - `GET /api/v1/admin/metrics` — confidence distribution, low-confidence rate, feedback like-rate,
-  eval-run history.
+  and eval-run history per suite; `GET /api/v1/admin/dashboard` renders it as trend sparklines
+  (one self-contained HTML file, no charting dependency and no CDN).
 
 ## Stack
 
 FastAPI · LangGraph · LangChain (structured outputs) · DeepSeek (OpenAI-compatible) · CLIP
-(local, one model shared by vision + retrieval + ranking) · PostgreSQL · Redis · SerpAPI ·
-Langfuse · Expo React Native frontend · GitHub Actions (ruff, strict mypy, pytest, eval gate)
+(local, one model shared by vision + attribute gates + ranking) · BGE-small + a MiniLM
+cross-encoder (catalog retrieval) · PostgreSQL + pgvector · Redis · SerpAPI · Langfuse ·
+Expo React Native frontend · GitHub Actions (ruff, strict mypy, pytest, eval gate)
 
-Deliberate non-choices, argued in [docs/adr/](docs/adr/): no standalone vector DB (embedding
-reranking is per-request and in-memory; the wardrobe is small enough that brute-force cosine
-beats index round-trips — pgvector is the documented scale-up), no fine-tuning (no data that
-would beat zero-shot + retrieval), no LLM-only outfit selection.
+Deliberate non-choices, argued in [docs/adr/](docs/adr/): no standalone vector DB — pgvector on
+the database that already holds the filterable attributes, so type/gender/price stay `WHERE`
+clauses instead of a two-system join; no vector index for the wardrobe, where a few hundred items
+scan faster than they index; no fine-tuning (no data that would beat zero-shot + retrieval); no
+LLM-only outfit selection.
 
 ## Run it
 
 ```bash
-# Requirements: Python 3.12, Poetry, PostgreSQL, Redis
+# Requirements: Python 3.12, Poetry, PostgreSQL 15+ with pgvector, Redis
 poetry install
 cp .env.example .env             # add DEEPSEEK_API_KEY / SERPAPI_API_KEY / LANGFUSE keys as desired
 poetry run alembic upgrade head
@@ -93,14 +116,22 @@ poetry run uvicorn main:app --reload
 # → POST /api/v1/analyze/stream  (SSE progress per graph node)
 # → /docs for the full OpenAPI surface
 
-poetry run python -m pytest tests/ -q          # 226 tests, no models/API/DB needed
+# Populate the retrieval catalog (offline; each grid query costs one SerpAPI credit)
+poetry run python -m backend.jobs.catalog_ingest --grid --max-queries 20 --export data/catalog_seed.json
+poetry run python -m backend.jobs.catalog_ingest --from-file data/catalog_seed.json   # replays the export above; no key needed
+poetry run python -m backend.jobs.catalog_ingest --refresh --max-queries 10           # re-confirm stock; one credit per slot
+
+poetry run python -m pytest tests/ -q          # 289 tests, no models/API/DB needed
 poetry run python evaluation/harness.py --check
 poetry run python evaluation/product_relevance.py
+poetry run python evaluation/catalog_retrieval.py      # needs PostgreSQL + pgvector
 poetry run python evaluation/llm_judge.py --sample 8   # needs DEEPSEEK_API_KEY
+# Every suite takes --record, which appends a row to evaluation_runs tagged with the git SHA.
+# → /api/v1/admin/dashboard plots whatever has been recorded
 
 docker compose up                # full stack (app + PostgreSQL + Redis)
 ```
 
 Everything degrades gracefully: no DeepSeek key → deterministic pipeline; no SerpAPI key → no
 shopping stage; no Langfuse keys → tracing no-ops; no image match in your wardrobe → shopping
-covers the gap.
+covers the gap; empty catalog or no reranker → live provider search, exactly as before.

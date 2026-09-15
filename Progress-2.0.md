@@ -96,6 +96,18 @@ Suggested acceptance criteria:
 
 ### 3. Product Catalog RAG and Reranking
 
+> **Shipped September 2026.** Hybrid retrieval (tsvector + pgvector, RRF) with a
+> cross-encoder reranker, an offline ingestion job, and a retrieval eval measuring all four
+> arms. Recall@3 rose from 0.630 (lexical) to 0.852 (hybrid + rerank). Design and the
+> negative result for RRF-alone: [ADR 005](docs/adr/005-catalog-rag-hybrid-retrieval.md).
+> Retrieval evidence reached the UI on 2026-09-13: per-arm rank and rerank score travel on
+> `ProductLink.match_evidence` and render behind a "Why these products" toggle.
+> Availability freshness landed the same day: `catalog_ingest --refresh` re-confirms the slots
+> the corpus holds, retrieval refuses rows older than `catalog_stale_after_days`, and demotion
+> requires a product to be both absent and already stale. Nothing from this theme is open in
+> code — what remains is operational: a real `--grid` ingest has run (5 rows), but the corpus is
+> too small yet to trust shopping results against it end-to-end.
+
 **Goal:** Replace fragile live shopping title matching with a grounded product retrieval pipeline.
 
 AI skills demonstrated:
@@ -264,6 +276,12 @@ Suggested acceptance criteria:
 ---
 
 ### 8. AI Evaluation and Observability Dashboard
+
+> **Shipped September 2026.** Four eval suites record to a shared `evaluation_runs` table keyed
+> by suite and git SHA; `GET /api/v1/admin/dashboard` renders the history as sparklines beside the
+> live confidence/feedback counters. Still open from this theme: API cost and cache-hit rate are
+> not tracked (cost lives in Langfuse, which needs keys), there is no per-case failure inspection
+> in the UI, and the dashboard is a server-rendered page rather than a screen in the Expo app.
 
 **Goal:** Make model and agent quality visible, measurable, and defensible.
 
