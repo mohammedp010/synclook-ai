@@ -793,7 +793,7 @@ Executed against the approved upgrade plan (see git history from `Initial commit
   colour policy entry under *Open items* below: the wedding miss does not reproduce.
   **Left to the user:** Langfuse cloud keys.
 
-### ⏭ Phase D: Publish + first CI run (next up)
+### ✅ Phase D: Publish + first CI run
 
 **State at the end of Phase C (2026-09-13).** Everything from Phases A, B and C is **complete but
 uncommitted** — 39 paths on `main`, no GitHub remote configured, so **CI has never once executed**.
@@ -812,12 +812,25 @@ Steps, in order:
    `ANTHROPIC_BASE_URL=http://127.0.0.1:8787`) out of the public repo; the `graphifyy` dev
    dependency was dropped from `pyproject.toml`/`poetry.lock` for the same reason (the `graphify`
    CLI runs from `~/.local/bin`, independent of this project's Poetry env).
-3. **`gh repo create` + push**, then watch the first Actions run. Expect the runner, not the code,
-   to be the problem: the workflow pulls a `pgvector/pgvector:pg16` service container, applies
-   migrations, and downloads CLIP + BGE + the MiniLM cross-encoder into the HF cache (cache key
-   `hf-clip-bge-minilm-v1`). First run is slow and the model download is the likeliest failure.
-4. **Sanity-check the public face** once it renders on GitHub: the README Mermaid diagram, the
-   ADR links, and that no `.env` value ever entered a commit.
+3. ~~**`gh repo create` + push**, then watch the first Actions run.~~ **Done 2026-09-15**:
+   `gh repo create synclook-ai --private`, pushed. The runner *was* the problem, but not the
+   predicted one — `poetry install` failed immediately (`Error: The current project could not be
+   installed: No file/folder found for package synclook-ai`). `pyproject.toml` had no
+   `[tool.poetry]` table, so Poetry 2.x defaulted to package mode and expected a `synclook_ai/`
+   source directory that doesn't exist (this is a flat `backend/`/`evaluation/`/`tests/` layout,
+   not an importable package). Reproduced locally with a fresh `poetry install --no-interaction`
+   too — this was a live bug, not a CI-only artifact. Fixed with `package-mode = false`
+   (`42b31e2`) and re-pushed.
+   **Second run (`34975641856`) passed clean end to end**: lint, format, strict mypy, 292 tests,
+   both eval gates, migrations against the `pgvector/pgvector:pg16` service container, and the
+   catalog retrieval eval — first time any of this has run outside this machine.
+   https://github.com/mohammedp010/synclook-ai/actions/runs/34975641856
+4. ~~**Sanity-check the public face.**~~ **Done 2026-09-15.** All 5 ADRs are tracked and every
+   ADR link in README/HANDOFF/Progress resolves to a real file; the architecture diagram is
+   standard Mermaid flowchart syntax, which GitHub renders natively. No `.env` value was ever
+   committed (`git ls-files` confirms `.env` was never tracked). `.claude/` and `CLAUDE.md` stayed
+   local per the decision above — the public repo has 177 tracked files, none of them local
+   tooling config.
 
 **Local verification before any of that** (all currently green):
 ```bash
