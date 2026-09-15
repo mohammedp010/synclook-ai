@@ -23,6 +23,7 @@ from backend.core.logging import get_logger
 from backend.services.vision import (
     _CLOTHING_TYPE_PROMPTS,
     _COLOR_PROMPTS,
+    _STYLE_PROMPTS,
     _classify_head,
     _encode_image,
     _get_models,
@@ -34,6 +35,10 @@ logger = get_logger(__name__)
 
 _THUMB_CACHE_PREFIX = "emb:thumb:"
 _THUMB_FETCH_TIMEOUT_S = 5.0
+
+# Several image CDNs reject the default client user-agent outright (Wikimedia
+# answers 403), which silently cost us every thumbnail from those hosts.
+_THUMB_FETCH_HEADERS = {"User-Agent": "SynclookAI/1.0 (product thumbnail classifier)"}
 
 
 class GenderLean(str, Enum):
@@ -64,6 +69,8 @@ def classify_embedding(embedding: list[float], head: str) -> tuple[str, float]:
         return _classify_head(tensor, head, _CLOTHING_TYPE_PROMPTS, holder)
     if head == "color":
         return _classify_head(tensor, head, _COLOR_PROMPTS, holder)
+    if head == "style":
+        return _classify_head(tensor, head, _STYLE_PROMPTS, holder)
     if head == "gender":
         return _classify_head(tensor, head, _GENDER_PROMPTS, holder)
     raise ValueError(f"Unknown classification head: {head}")
@@ -135,7 +142,11 @@ class EmbeddingService:
                 logger.warning("thumb_cache_read_failed", error=str(exc))
 
         try:
-            async with httpx.AsyncClient(timeout=_THUMB_FETCH_TIMEOUT_S, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=_THUMB_FETCH_TIMEOUT_S,
+                follow_redirects=True,
+                headers=_THUMB_FETCH_HEADERS,
+            ) as client:
                 resp = await client.get(url)
                 resp.raise_for_status()
                 embedding = await self.embed_image_bytes(resp.content)

@@ -114,8 +114,12 @@ class ProductSearchService:
             logger.error("serpapi_http_error", status=exc.response.status_code, query=query)
             raise ProductSearchError(f"SerpAPI returned {exc.response.status_code}") from exc
         except httpx.RequestError as exc:
-            logger.error("serpapi_request_error", error=str(exc), query=query)
-            raise ProductSearchError(f"SerpAPI request failed: {exc}") from exc
+            # Transport failures frequently carry an empty ``str(exc)`` — a bare
+            # ReadError or ConnectError says nothing — which made a real ingest
+            # failure unreadable in the logs. The class name is the diagnosis.
+            kind = type(exc).__name__
+            logger.error("serpapi_request_error", error=str(exc) or "(no detail)", kind=kind, query=query)
+            raise ProductSearchError(f"SerpAPI request failed ({kind}): {exc}") from exc
 
         return self._parse_results(data)
 
