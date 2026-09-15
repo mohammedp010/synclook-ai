@@ -48,6 +48,20 @@ _OCCASION_KEYWORDS: list[tuple[str, str, Style]] = [
 _NO_SHOPPING_PHRASES = ["no shopping", "don't show products", "do not show products", "no products", "no links"]
 
 
+def style_lean_for_occasion(occasion: str) -> Style | None:
+    """The style an occasion implies, from the same table the heuristic uses.
+
+    A wedding means formal and a gym means sporty regardless of who worked that
+    out, so the mapping is a rule rather than something the extractor is
+    trusted to remember.
+    """
+    lowered = occasion.lower()
+    for keyword, _label, style in _OCCASION_KEYWORDS:
+        if keyword in lowered:
+            return style
+    return None
+
+
 def heuristic_intent(text: str) -> StyleIntent:
     """Deterministic keyword/regex intent parse — the keyless fallback."""
     lowered = text.lower()
@@ -120,6 +134,7 @@ class IntentAgent(BaseAgent):
         else:
             intent = heuristic_intent(text)
 
+        intent = _with_occasion_style(intent)
         ctx.metadata["intent"] = intent.model_dump(mode="json")
         ctx.metadata["intent_source"] = source
 
@@ -132,6 +147,24 @@ class IntentAgent(BaseAgent):
             wants_shopping=intent.wants_shopping,
         )
         return ctx
+
+
+def _with_occasion_style(intent: StyleIntent) -> StyleIntent:
+    """Fill in the style an occasion implies when extraction left it out.
+
+    Observed on the LLM path: it returns ``occasion='wedding'`` with an empty
+    ``preferred_styles`` often enough to matter, and the styling agent then
+    falls back to the *detected garment's* style — so a wedding request built a
+    smart-casual look around a blazer and recommended jeans with it. The
+    occasion is the stronger signal, and the mapping is already a rule, so the
+    rules supply what the model omitted rather than the omission being silent.
+    """
+    if intent.preferred_styles or not intent.occasion:
+        return intent
+    style = style_lean_for_occasion(intent.occasion)
+    if style is None:
+        return intent
+    return intent.model_copy(update={"preferred_styles": [style]})
 
 
 def intent_from_context(ctx: AgentContext) -> StyleIntent | None:

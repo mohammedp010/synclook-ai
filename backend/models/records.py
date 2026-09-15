@@ -79,11 +79,20 @@ class WardrobeItem(Base):
 
 
 class EvaluationRun(Base):
-    """One execution of the evaluation harness, for tracking metrics over time."""
+    """One execution of one evaluation suite, for tracking metrics over time.
+
+    The suites measure different things (structural quality, product matching,
+    retrieval ranking, LLM-judged grounding) but they answer the same question
+    — did this commit make the system better or worse — so they share a table
+    and are told apart by ``suite``. ``metrics`` is deliberately schemaless:
+    each suite reports its own numbers, and a migration per new metric would
+    make adding one expensive enough to discourage it.
+    """
 
     __tablename__ = "evaluation_runs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    suite: Mapped[str] = mapped_column(String(32), nullable=False, default="harness", index=True)
     git_sha: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     num_cases: Mapped[int] = mapped_column(Integer, nullable=False)
     metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

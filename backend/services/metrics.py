@@ -8,10 +8,12 @@ over time" from our own data.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Any
 
 from sqlalchemy import Float, case, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from backend.core.logging import get_logger
 from backend.models.records import AnalysisRecord, EvaluationRun, FeedbackRecord, WardrobeItem
@@ -69,17 +71,32 @@ class MetricsService:
             "like_rate": round(likes / total, 4) if total else None,
         }
 
-    async def _recent_eval_runs(self, db: AsyncSession, limit: int = 10) -> list[dict[str, Any]]:
-        rows = (
-            await db.execute(select(EvaluationRun).order_by(EvaluationRun.created_at.desc()).limit(limit))
-        ).scalars()
-        return [
-            {
-                "id": str(run.id),
-                "git_sha": run.git_sha,
-                "num_cases": run.num_cases,
-                "created_at": run.created_at.isoformat() if run.created_at else None,
-                "metrics": run.metrics,
-            }
-            for run in rows
-        ]
+    async def _recent_eval_runs(self, db: AsyncSession, per_suite: int = 20) -> dict[str, list[dict[str, Any]]]:
+        """Recent runs grouped by suite, oldest first within each suite.
+
+        Grouped rather than interleaved because the suites are not comparable to
+        each other — a retrieval recall and a faithfulness rate on one axis would
+        be a chart that means nothing. Oldest first because the only reason to
+        read this is to see a trend, and a trend reads left to right.
+        """
+        ranked = select(
+            EvaluationRun,
+            func.row_number()
+            .over(partition_by=EvaluationRun.suite, order_by=EvaluationRun.created_at.desc())
+            .label("recency"),
+        ).subquery()
+        run = aliased(EvaluationRun, ranked)
+        rows = (await db.execute(select(run).where(ranked.c.recency <= per_suite))).scalars()
+
+        by_suite: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for record in rows:
+            by_suite[record.suite].append(
+                {
+                    "id": str(record.id),
+                    "git_sha": record.git_sha,
+                    "num_cases": record.num_cases,
+                    "created_at": record.created_at.isoformat() if record.created_at else None,
+                    "metrics": record.metrics,
+                }
+            )
+        return {suite: sorted(runs, key=lambda r: r["created_at"] or "") for suite, runs in sorted(by_suite.items())}

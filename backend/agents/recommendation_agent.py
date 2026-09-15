@@ -199,7 +199,15 @@ class RecommendationAgent(BaseAgent):
         category: str,
         variant_index: int,
         used_item_types: set[str],
+        color_offset: int = 0,
     ) -> StyleMatch | None:
+        """Pick one item for *category*.
+
+        ``variant_index`` selects *which* item (stable per outfit), while
+        ``color_offset`` rotates the complement palette per slot — otherwise
+        every slot in a look takes ``recommended_colors[0]`` and the outfit
+        comes out monochrome (white chinos + white blazer + white shoes).
+        """
         candidates = [
             m
             for m in matches
@@ -208,7 +216,7 @@ class RecommendationAgent(BaseAgent):
         if not candidates:
             return None
         chosen = candidates[variant_index % len(candidates)]
-        return _diversify_color(chosen, variant_index)
+        return _diversify_color(chosen, variant_index + color_offset)
 
     def _apply_rank_penalty(
         self,
@@ -340,6 +348,7 @@ class RecommendationAgent(BaseAgent):
                     category=req_category,
                     variant_index=outfit_idx,
                     used_item_types=used_item_types,
+                    color_offset=len(outfit_matches),
                 )
                 if match is None:
                     required_ok = False
@@ -369,6 +378,7 @@ class RecommendationAgent(BaseAgent):
                     category=opt_category,
                     variant_index=outfit_idx,
                     used_item_types=used_item_types,
+                    color_offset=len(outfit_matches),
                 )
                 if match is None:
                     continue

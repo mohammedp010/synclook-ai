@@ -64,7 +64,7 @@ jobs:
         run: poetry run ruff format --check backend/ tests/ evaluation/
 
       - name: Type check (mypy strict)
-        run: poetry run mypy backend/
+        run: poetry run mypy backend/ evaluation/
 
       - name: Tests
         run: poetry run python -m pytest tests/ -q

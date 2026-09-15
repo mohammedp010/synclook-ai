@@ -228,7 +228,10 @@ ITEM_SPECIFIC_OUTFIT_STRUCTURE: dict[ClothingType, dict[str, list[str]]] = {
 
 SAFE_DEFAULTS_BY_CATEGORY: dict[str, list[ClothingType]] = {
     "topwear": [ClothingType.SHIRT, ClothingType.TSHIRT, ClothingType.SWEATER],
-    "bottomwear": [ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.CHINOS],
+    # SHORTS trails the list so only styles that exclude the others (sporty)
+    # fall through to it; without it sporty had no style-legal bottomwear and
+    # the required-category rescue reached for jeans.
+    "bottomwear": [ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.CHINOS, ClothingType.SHORTS],
     "outerwear": [ClothingType.JACKET, ClothingType.BLAZER],
     "footwear": [ClothingType.SHOES],
     "accessory": [ClothingType.ACCESSORY],
@@ -335,7 +338,7 @@ STYLE_ALLOWED_ITEMS: dict[Style, set[ClothingType]] = {
         ClothingType.HOODIE,
         ClothingType.SHORTS,
         ClothingType.JACKET,
-        ClothingType.JEANS,
+        ClothingType.TROUSERS,
         ClothingType.SHOES,
         ClothingType.ACCESSORY,
     },

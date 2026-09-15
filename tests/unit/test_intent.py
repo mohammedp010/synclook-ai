@@ -5,7 +5,12 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 from backend.agents.base import AgentContext
-from backend.agents.intent_agent import IntentAgent, heuristic_intent, intent_from_context
+from backend.agents.intent_agent import (
+    IntentAgent,
+    heuristic_intent,
+    intent_from_context,
+    style_lean_for_occasion,
+)
 from backend.core.exceptions import LLMError
 from backend.schemas.clothing import Style
 from backend.schemas.intent import RecommendationIssue, StyleIntent
@@ -94,6 +99,55 @@ class TestIntentAgent:
         assert intent is not None
         assert Style.SPORTY in intent.preferred_styles
         assert ctx.metadata["intent_source"] == "heuristic"
+
+
+class TestOccasionStyleBackfill:
+    """The occasion implies a style; the rules supply it when the model does not."""
+
+    def test_known_occasions_map_to_their_style(self) -> None:
+        assert style_lean_for_occasion("wedding") is Style.FORMAL
+        assert style_lean_for_occasion("heading to the gym") is Style.SPORTY
+
+    def test_unknown_occasion_maps_to_nothing(self) -> None:
+        assert style_lean_for_occasion("volcano expedition") is None
+
+    async def test_style_is_backfilled_when_extraction_omits_it(self) -> None:
+        # Observed live: the LLM returns the occasion but an empty style list,
+        # and styling then falls back to the detected garment's own style — so a
+        # wedding request produced a smart-casual look with jeans.
+        llm = AsyncMock()
+        llm.enabled = True
+        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="wedding"))
+        ctx = AgentContext(image_bytes=b"x")
+        ctx.metadata["user_intent_text"] = "going to a wedding"
+        ctx = await IntentAgent(llm_service=llm).run(ctx)
+        intent = intent_from_context(ctx)
+        assert intent is not None
+        assert intent.preferred_styles == [Style.FORMAL]
+
+    async def test_extracted_style_is_not_overridden(self) -> None:
+        # "A casual wedding" is a thing; the model saw the request, the table
+        # only saw one word of it.
+        llm = AsyncMock()
+        llm.enabled = True
+        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="wedding", preferred_styles=[Style.CASUAL]))
+        ctx = AgentContext(image_bytes=b"x")
+        ctx.metadata["user_intent_text"] = "a very casual wedding"
+        ctx = await IntentAgent(llm_service=llm).run(ctx)
+        intent = intent_from_context(ctx)
+        assert intent is not None
+        assert intent.preferred_styles == [Style.CASUAL]
+
+    async def test_unmapped_occasion_leaves_styles_empty(self) -> None:
+        llm = AsyncMock()
+        llm.enabled = True
+        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="volcano expedition"))
+        ctx = AgentContext(image_bytes=b"x")
+        ctx.metadata["user_intent_text"] = "volcano expedition"
+        ctx = await IntentAgent(llm_service=llm).run(ctx)
+        intent = intent_from_context(ctx)
+        assert intent is not None
+        assert intent.preferred_styles == []
 
 
 class TestRecommendationIssue:

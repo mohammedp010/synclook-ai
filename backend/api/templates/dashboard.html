@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synclook AI — quality dashboard</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262b35;
+    --text: #e6e8ec; --muted: #8b93a1; --good: #4ade80; --bad: #f87171; --accent: #7dd3fc;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); padding: 32px 24px 64px; }
+  header { max-width: 1100px; margin: 0 auto 28px; }
+  h1 { font-size: 20px; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+       margin: 0 0 14px; font-weight: 600; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .card .value { font-size: 26px; font-variant-numeric: tabular-nums; }
+  .card .label { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .suite { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 16px; }
+  .suite:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .suite h3 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
+  .suite .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-bottom: 18px; }
+  .chart .name { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+  .chart .now { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .delta.up { color: var(--good); } .delta.down { color: var(--bad); } .delta.flat { color: var(--muted); }
+  svg { display: block; width: 100%; height: 44px; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 10px 6px 0; }
+  td { padding: 3px 10px 3px 0; font-variant-numeric: tabular-nums; border-top: 1px solid var(--line); }
+  td.metric { color: var(--muted); width: 60%; }
+  .note { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .empty { color: var(--muted); font-size: 13px; }
+  code { color: var(--accent); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Synclook AI — quality dashboard</h1>
+  <div class="sub">Everything below is recorded by the evaluation suites, not sampled from traffic.
+    Per-request traces and token costs live in Langfuse. Refresh to update.</div>
+</header>
+<main id="root"><section class="empty">Loading…</section></main>
+
+<script>
+// Single-metric sparkline. Deliberately hand-drawn SVG rather than a charting
+// dependency: three suites' worth of small series does not justify shipping a
+// library, and this page has to work with no network.
+function sparkline(values) {
+  const w = 100, h = 30, pad = 2;
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const span = hi - lo || 1;
+  const x = i => pad + (i * (w - 2 * pad)) / Math.max(values.length - 1, 1);
+  const y = v => h - pad - ((v - lo) / span) * (h - 2 * pad);
+  const line = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const last = values.length - 1;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${line}" fill="none" stroke="#7dd3fc" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+    <circle cx="${x(last).toFixed(1)}" cy="${y(values[last]).toFixed(1)}" r="1.6" fill="#7dd3fc"/>
+  </svg>`;
+}
+
+function delta(values) {
+  if (values.length < 2) return "";
+  const change = values[values.length - 1] - values[values.length - 2];
+  if (Math.abs(change) < 1e-9) return '<span class="delta flat">=</span>';
+  const cls = change > 0 ? "up" : "down";
+  return `<span class="delta ${cls}">${change > 0 ? "+" : ""}${change.toFixed(4)}</span>`;
+}
+
+// Every numeric metric a suite has reported, oldest run first, sorted by name
+// so the same metric sits in the same place between refreshes.
+//
+// A metric need not appear in every run. Suites gain and lose metrics, and
+// some carry a parameter in their name (`recall@3` and `recall@5` are
+// genuinely different measurements, not one series with a gap), so each is
+// plotted over the runs that actually reported it.
+function series(runs) {
+  const names = [...new Set(runs.flatMap(r => Object.keys(r.metrics)))].sort();
+  return names
+    .map(name => [name, runs.map(r => r.metrics[name]).filter(v => typeof v === "number")])
+    .filter(([, values]) => values.length > 0);
+}
+
+function card(value, label) {
+  return `<div class="card"><div class="value">${value}</div><div class="label">${label}</div></div>`;
+}
+
+// A metric is charted only if it has moved. The rest go in a table: a suite
+// like catalog_retrieval reports two dozen numbers, half of which are pinned
+// at 1.0 on a corpus this size, and drawing a flat line for each buries the
+// two or three that are actually saying something.
+function suiteBody(runs) {
+  const all = series(runs);
+  if (all.length === 0) return '<div class="note">No numeric metrics recorded.</div>';
+
+  const moving = all.filter(([, v]) => v.length > 1 && new Set(v).size > 1);
+  const still = all.filter(([, v]) => v.length < 2 || new Set(v).size === 1);
+
+  const charts = moving.length === 0 ? "" : `<div class="charts">${moving.map(([name, values]) => `
+    <div class="chart">
+      <div class="name"><span>${name}</span>
+        <span class="now">${values[values.length - 1]} ${delta(values)}</span></div>
+      ${sparkline(values)}
+    </div>`).join("")}</div>`;
+
+  const note = runs.length < 2
+    ? '<div class="note">One run so far — record another to see a trend.</div>'
+    : moving.length === 0
+      ? `<div class="note">Nothing moved across the last ${runs.length} runs.</div>`
+      : "";
+
+  const table = still.length === 0 ? "" : `<table>
+    <tr><th>${moving.length ? "unchanged metric" : "metric"}</th><th>latest</th></tr>
+    ${still.map(([name, v]) => `<tr><td class="metric">${name}</td><td>${v[v.length - 1]}</td></tr>`).join("")}
+  </table>`;
+
+  return note + charts + table;
+}
+
+function render(data) {
+  const a = data.analyses, f = data.feedback;
+  const suites = Object.entries(data.evaluation_runs);
+  const pct = v => v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%";
+
+  const overview = `<section><h2>System</h2><div class="cards">
+    ${card(a.total, "analyses")}
+    ${card(a.avg_type_confidence ?? "—", "avg type confidence")}
+    ${card(pct(a.low_confidence_rate), "low-confidence rate")}
+    ${card(f.likes + f.dislikes, "feedback")}
+    ${card(pct(f.like_rate), "like rate")}
+    ${card(data.wardrobe_items, "wardrobe items")}
+  </div></section>`;
+
+  const evals = suites.length === 0
+    ? `<section><h2>Evaluations</h2><div class="note">No runs recorded yet — run an eval with
+       <code>--record</code>.</div></section>`
+    : `<section><h2>Evaluations</h2>${suites.map(([suite, runs]) => {
+        const latest = runs[runs.length - 1];
+        const sha = latest.git_sha ? latest.git_sha.slice(0, 7) : "no sha";
+        return `<div class="suite">
+          <h3>${suite}</h3>
+          <div class="meta">${runs.length} run${runs.length === 1 ? "" : "s"} ·
+            ${latest.num_cases} cases · latest ${sha} ·
+            ${new Date(latest.created_at).toLocaleString()}</div>
+          ${suiteBody(runs)}
+        </div>`;
+      }).join("")}</section>`;
+
+  document.getElementById("root").innerHTML = overview + evals;
+}
+
+fetch("METRICS_URL")
+  .then(r => r.json())
+  .then(render)
+  .catch(e => {
+    document.getElementById("root").innerHTML =
+      `<section class="empty">Could not load metrics: ${e}</section>`;
+  });
+</script>
+</body>
+</html>

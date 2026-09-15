@@ -29,6 +29,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from backend.agents.shopping_agent import ShoppingAgent  # noqa: E402
 from backend.schemas.api import ProductLink  # noqa: E402
+from evaluation.recording import record_if_asked  # noqa: E402
 
 CASES_PATH = Path(__file__).resolve().parent / "product_cases.json"
 
@@ -119,6 +120,7 @@ async def main() -> None:
     setup_logging("ERROR")
     parser = argparse.ArgumentParser(description="Evaluate shopping product-relevance matchers")
     parser.add_argument("--matcher", choices=["keyword", "embedding", "both"], default="both")
+    parser.add_argument("--record", action="store_true", help="persist the run to PostgreSQL")
     args = parser.parse_args()
 
     matchers = ["keyword", "embedding"] if args.matcher == "both" else [args.matcher]
@@ -126,6 +128,17 @@ async def main() -> None:
     for matcher in matchers:
         reports[matcher] = await evaluate_product_relevance(matcher=matcher)
     print(json.dumps(reports, indent=2))
+
+    # One row per matcher: they are alternative implementations of the same
+    # stage, and a chart that averaged them would hide the comparison that is
+    # the whole point of keeping the keyword baseline around.
+    for matcher, report in reports.items():
+        await record_if_asked(
+            args.record,
+            f"product_relevance:{matcher}",
+            num_cases=report["summary"]["num_cases"],
+            metrics=report["summary"],
+        )
 
 
 if __name__ == "__main__":

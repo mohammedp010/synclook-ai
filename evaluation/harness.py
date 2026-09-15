@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +43,7 @@ from backend.agents.recommendation_agent import RecommendationAgent  # noqa: E40
 from backend.agents.styling_agent import StylingAgent  # noqa: E402
 from backend.schemas.clothing import ClothingAttributes, ClothingType, Color, Pattern, Style  # noqa: E402
 from backend.tools.style_rules import CLOTHING_TYPE_CATEGORIES, StyleRuleEngineTool  # noqa: E402
+from evaluation.recording import record_if_asked  # noqa: E402
 
 # Regression gates for --check. Golden consistency keeps its Step 23 target;
 # structural gates are set from the calibrated baseline (see Progress.md).
@@ -255,41 +255,6 @@ def check_thresholds(summary: dict[str, Any]) -> list[str]:
     return violations
 
 
-def _git_sha() -> str | None:
-    try:
-        out = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            cwd=PROJECT_ROOT,
-            timeout=5,
-            check=True,
-        )
-        return out.stdout.strip()
-    except Exception:
-        return None
-
-
-async def record_run(report: dict[str, Any]) -> None:
-    """Persist this run as an EvaluationRun row (best effort)."""
-    from backend.db.base import Base
-    from backend.db.session import async_session_factory, engine
-    from backend.models.records import EvaluationRun
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session_factory() as session:
-        run = EvaluationRun(
-            git_sha=_git_sha(),
-            num_cases=report["summary"]["num_cases"],
-            metrics=report["summary"],
-        )
-        session.add(run)
-        await session.commit()
-    print(f"recorded EvaluationRun (git_sha={run.git_sha}, id={run.id})")
-
-
 async def main() -> None:
     from backend.core.logging import setup_logging
 
@@ -305,11 +270,7 @@ async def main() -> None:
     report = await evaluate_cases(args.cases)
     print(json.dumps(report, indent=2))
 
-    if args.record:
-        try:
-            await record_run(report)
-        except Exception as exc:  # DB down is not a harness failure
-            print(f"warning: could not record run: {exc}", file=sys.stderr)
+    await record_if_asked(args.record, "harness", num_cases=report["summary"]["num_cases"], metrics=report["summary"])
 
     if args.check:
         violations = check_thresholds(report["summary"])
