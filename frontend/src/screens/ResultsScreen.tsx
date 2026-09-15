@@ -121,12 +121,63 @@ const ProductCard = memo(function ProductCard({ product }: { product: ProductLin
             <Text style={styles.productSource}>{product.source}</Text>
           </View>
         </View>
+        {typeof product.match_score === "number" && product.match_score > 0 && (
+          <Text style={styles.productMatch}>
+            {Math.round(product.match_score * 100)}% relevant
+          </Text>
+        )}
         <View style={styles.buyButton}>
           <Text style={styles.buyButtonText}>View →</Text>
         </View>
       </View>
       </Animated.View>
     </TouchableOpacity>
+  );
+});
+
+/**
+ * Retrieval evidence for a row of products.
+ *
+ * Deliberately outside ProductCard: the card's whole surface opens the buy
+ * link, and at 140-180px wide there is no room for a list of facts. One
+ * toggle per slot mirrors "Why this look" — same contract, shopping side.
+ */
+const ProductEvidence = memo(function ProductEvidence({
+  products,
+}: {
+  products: ProductLink[];
+}) {
+  const [show, setShow] = useState(false);
+  const grounded = products.filter((p) => (p.match_evidence?.length ?? 0) > 0);
+  if (grounded.length === 0) return null;
+
+  return (
+    <View style={styles.productEvidenceSection}>
+      <TouchableOpacity
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setShow((v) => !v);
+        }}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.evidenceToggle}>
+          {show ? "▾ Why these products" : "▸ Why these products"}
+        </Text>
+      </TouchableOpacity>
+      {show &&
+        grounded.map((product, i) => (
+          <View key={i} style={styles.productEvidenceBlock}>
+            <Text style={styles.productEvidenceTitle} numberOfLines={1}>
+              {product.title}
+            </Text>
+            {product.match_evidence?.map((fact, fi) => (
+              <Text key={fi} style={styles.evidenceFact}>
+                • {fact}
+              </Text>
+            ))}
+          </View>
+        ))}
+    </View>
   );
 });
 
@@ -202,6 +253,9 @@ const OutfitCard = memo(function OutfitCard({
                     <ProductCard key={pi} product={product} />
                   ))}
                 </ScrollView>
+              )}
+              {item.products && item.products.length > 0 && (
+                <ProductEvidence products={item.products} />
               )}
             </View>
           ))}
@@ -677,6 +731,22 @@ const styles = StyleSheet.create({
     ...typography.body.xs,
     color: colors.brand[400],
     fontSize: 9,
+  },
+  productMatch: {
+    ...typography.body.xs,
+    color: colors.text.tertiary,
+    fontSize: 9,
+  },
+  productEvidenceSection: {
+    marginTop: 4,
+  },
+  productEvidenceBlock: {
+    marginTop: 6,
+  },
+  productEvidenceTitle: {
+    ...typography.label.sm,
+    color: colors.text.secondary,
+    fontSize: 11,
   },
   buyButton: {
     marginTop: 4,

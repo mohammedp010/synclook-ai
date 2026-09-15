@@ -63,6 +63,36 @@ class Settings(BaseSettings):
     vision_center_crop_ratio: float = 0.85
     vision_enable_caption: bool = False  # BLIP is ~1GB; caption is display-only metadata
 
+    # --- Catalog retrieval (RAG) ---
+    # Retrieval-trained text encoder; CLIP's text tower is not a search index
+    # (77-token cap, caption-aligned). 384-dim must match the pgvector column.
+    text_embedding_model_name: str = "BAAI/bge-small-en-v1.5"
+    text_embedding_dim: int = 384
+    # Cross-encoder that re-scores the fused candidate list. Disabling it falls
+    # back to fusion order, which is a meaningful ablation for the eval.
+    reranker_enabled: bool = True
+    reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    # Candidates pulled from each retrieval arm before fusion.
+    catalog_retrieval_limit: int = 40
+    # Candidates handed to the cross-encoder after fusion.
+    catalog_rerank_limit: int = 20
+    # Reciprocal-rank-fusion damping. 60 is the value from the original RRF
+    # paper and the de-facto default; low enough that top ranks dominate.
+    catalog_rrf_k: int = 60
+    # Serve shopping results from the local catalog before calling the provider.
+    catalog_retrieval_enabled: bool = True
+    # Cross-encoder probability a catalog hit must clear to be shown. Measured
+    # on outfit-slot queries: an exact match scores >0.99, the right garment in
+    # the wrong colour ~0.58, the wrong style <0.01 — so 0.5 keeps near-misses
+    # when nothing better exists and drops the rest.
+    catalog_min_score: float = 0.5
+    # Availability freshness. A catalog row asserts a product was buyable when
+    # it was last confirmed; past this many days that assertion is no longer
+    # credible, so retrieval stops making it and the slot falls through to live
+    # search. 0 disables the window. Keeping rows inside it is the refresh
+    # job's job: `catalog_ingest --refresh`.
+    catalog_stale_after_days: int = 30
+
     # --- Langfuse (LLM/agent observability) ---
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""

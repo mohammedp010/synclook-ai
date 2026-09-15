@@ -40,3 +40,9 @@ htmlcov/
 
 # Expo (root-level cache)
 .expo/
+
+graphify-out/
+
+# Claude Code local tooling (machine-specific hooks/settings, not project code)
+.claude/
+CLAUDE.md

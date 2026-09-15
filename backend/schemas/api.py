@@ -47,6 +47,14 @@ class ProductLink(BaseModel):
         default="",
         description="Short explanation of why this product matched",
     )
+    match_evidence: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Retrieval facts behind this product, one per line — which arm found it "
+            "(keyword/vector), at what rank, and its rerank score. The same grounding "
+            "contract as Recommendation.evidence, applied to shopping."
+        ),
+    )
 
 
 class RecommendationItem(BaseModel):

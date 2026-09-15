@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from backend.agents.base import AgentContext, StyleMatch
+from backend.core.config import get_settings
 from backend.schemas.clothing import (
     ClothingAttributes,
     ClothingType,
@@ -15,6 +16,18 @@ from backend.schemas.clothing import (
     Style,
 )
 from backend.services.vision import VisionResult
+
+
+@pytest.fixture(autouse=True)
+def catalog_retrieval_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the suite hermetic — no test may depend on a live catalog.
+
+    Catalog retrieval degrades gracefully when PostgreSQL is unreachable, so
+    tests would pass either way; they would just pass slowly, for the wrong
+    reason, and on a developer machine they would read whatever happens to be
+    ingested. Tests that exercise retrieval turn it back on explicitly.
+    """
+    monkeypatch.setattr(get_settings(), "catalog_retrieval_enabled", False)
 
 
 @pytest.fixture

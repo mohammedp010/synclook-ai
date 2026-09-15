@@ -8,6 +8,28 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+
+    # The catalog retrieval eval runs against a real database: pgvector's index
+    # behaviour and PostgreSQL full-text ranking are exactly what it measures,
+    # so mocking them would measure nothing.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: synclook
+          POSTGRES_PASSWORD: synclook
+          POSTGRES_DB: synclook
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://synclook:synclook@localhost:5432/synclook
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
-          key: hf-clip-vit-base-patch32
+          key: hf-clip-bge-minilm-v1
 
       - name: Install dependencies
         run: poetry install --no-interaction
@@ -52,3 +74,9 @@ jobs:
 
       - name: Evaluation report (product relevance baseline)
         run: poetry run python evaluation/product_relevance.py
+
+      - name: Apply migrations
+        run: poetry run alembic upgrade head
+
+      - name: Evaluation report (catalog retrieval arms)
+        run: poetry run python evaluation/catalog_retrieval.py

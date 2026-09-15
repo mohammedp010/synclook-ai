@@ -24,6 +24,8 @@ export interface ProductLink {
   source: string;
   match_score?: number;
   match_reason?: string;
+  /** Retrieval facts behind this product — which arm found it, rank, rerank score. */
+  match_evidence?: string[];
 }
 
 export interface RecommendationItem {

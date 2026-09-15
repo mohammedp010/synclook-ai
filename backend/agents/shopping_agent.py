@@ -4,8 +4,18 @@ Iterates over RecommendationItems produced by the RecommendationAgent,
 queries Google Shopping (via ProductSearchTool), and populates the
 ``products`` field with matching online products.
 
-Product relevance ranking has two implementations selected by the
-``shopping_matcher`` setting:
+Products come from two sources, in order:
+
+1. **The local catalog** (:mod:`backend.services.product_catalog`) — hybrid
+   lexical + vector retrieval over an ingested corpus, reranked by a
+   cross-encoder. No network call, reproducible, and already normalized onto
+   the project taxonomy at ingest time.
+2. **Live provider search** — for slots the catalog cannot fill (it is
+   deliberately narrow), the existing SerpAPI path runs and its results are
+   gated by the zero-shot matcher below.
+
+Product relevance ranking for the live path has two implementations selected
+by the ``shopping_matcher`` setting:
 
 - ``embedding`` (default): CLIP similarity between the desired-item spec
   ("menswear navy shirt formal") and each product's title (plus thumbnail
@@ -23,10 +33,13 @@ from __future__ import annotations
 import asyncio
 
 from backend.agents.base import AgentContext, BaseAgent
+from backend.agents.intent_agent import intent_from_context
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
+from backend.db.session import async_session_factory
 from backend.schemas.api import ProductLink, Recommendation
 from backend.services.embeddings import EmbeddingService, classify_embedding, cosine_similarity
+from backend.services.product_catalog import CatalogQuery, ProductCatalogService
 from backend.tools.product_search import ProductSearchTool
 from backend.tools.style_rules import (
     INVALID_ITEMS_BY_SHOPPING_INTENT,
@@ -37,6 +50,28 @@ from backend.tools.style_rules import (
 logger = get_logger(__name__)
 
 MIN_PRODUCT_MATCH_SCORE = 0.5
+
+# Ranking nudge when the thumbnail classifies to the same garment as the title.
+IMAGE_AGREEMENT_BONUS = 0.1
+# A thumbnail may only veto a product when it is at least this confident.
+IMAGE_VETO_MIN_CONFIDENCE = 0.5
+# Upper bound on in-flight product-search calls per analysis.
+MAX_CONCURRENT_PRODUCT_QUERIES = 6
+
+# Catalog `gender_lean` values, keyed by normalized shopping intent.
+_GENDER_LEAN_BY_INTENT = {"menswear": "men", "womenswear": "women"}
+
+
+def build_item_spec(*, item_type: str, color: str, style: str, shopping_intent: str) -> str:
+    """The canonical phrase describing a desired outfit slot.
+
+    Both retrieval paths use it, so the catalog is searched with exactly the
+    text the live matcher scores against — otherwise an A/B between them would
+    be comparing queries as much as retrievers.
+    """
+    prefix = {"menswear": "men's", "womenswear": "women's"}.get(normalize_shopping_intent(shopping_intent), "")
+    parts = (prefix, color, item_type, (style or "").replace("_", " "))
+    return " ".join(part for part in parts if part)
 
 
 class ShoppingAgent(BaseAgent):
@@ -52,12 +87,14 @@ class ShoppingAgent(BaseAgent):
         self,
         product_tool: ProductSearchTool | None = None,
         embedding_service: EmbeddingService | None = None,
+        catalog: ProductCatalogService | None = None,
     ) -> None:
         super().__init__()
         self._tool = product_tool
         self._style_tool = StyleRuleEngineTool()
         self._settings = get_settings()
         self._embeddings = embedding_service
+        self._catalog = catalog or ProductCatalogService()
 
     def _post_filter_products(self, products: list[ProductLink], shopping_intent: str) -> list[ProductLink]:
         """Filter shopping results that violate deterministic shopping intent."""
@@ -124,19 +161,25 @@ class ShoppingAgent(BaseAgent):
         color: str,
         style: str,
         shopping_intent: str,
-    ) -> tuple[float, str]:
+    ) -> tuple[float, list[str]]:
+        """Score a product, returning the facts that produced the score.
+
+        The facts are returned as a list rather than a joined string so callers
+        can surface them individually — same grounding contract as
+        ``Recommendation.evidence``.
+        """
         title = (getattr(product, "title", "") or "").lower()
         if not title:
-            return 0.0, "Missing product title"
+            return 0.0, ["Missing product title"]
 
         intent_filtered = self._post_filter_products([product], shopping_intent)
         if not intent_filtered:
-            return 0.0, "Excluded by shopping intent"
+            return 0.0, ["Excluded by shopping intent"]
 
         item_keywords = self._item_keywords(allowed_item_type)
         item_match = not item_keywords or any(token in title for token in item_keywords)
         if not item_match:
-            return 0.0, "Item type does not match"
+            return 0.0, ["Item type does not match"]
 
         score = 0.5
         reasons = [f"matches {allowed_item_type}"]
@@ -163,7 +206,7 @@ class ShoppingAgent(BaseAgent):
         if getattr(product, "source", ""):
             score += 0.05
 
-        return min(round(score, 2), 1.0), "; ".join(reasons)
+        return min(round(score, 2), 1.0), reasons
 
     def _validate_products_keyword(
         self,
@@ -177,7 +220,7 @@ class ShoppingAgent(BaseAgent):
         """Legacy keyword/synonym title matcher (kept for eval comparison)."""
         result = []
         for product in products:
-            score, reason = self._score_product_match(
+            score, facts = self._score_product_match(
                 product,
                 allowed_item_type=allowed_item_type,
                 color=color,
@@ -187,7 +230,8 @@ class ShoppingAgent(BaseAgent):
             if score < MIN_PRODUCT_MATCH_SCORE:
                 continue
             product.match_score = score
-            product.match_reason = reason
+            product.match_reason = "; ".join(facts)
+            product.match_evidence = facts
             result.append(product)
         result.sort(key=lambda item: getattr(item, "match_score", 0.0), reverse=True)
         return result
@@ -210,8 +254,9 @@ class ShoppingAgent(BaseAgent):
         - color gate: title must classify to the desired color
         - gender gate: title must not classify to the opposite gender lean
 
-        Survivors are ranked by similarity to the desired-item spec, blended
-        with thumbnail image similarity when the thumbnail is fetchable.
+        Survivors are ranked by title similarity to the desired-item spec;
+        a fetchable thumbnail can add a small ranking bonus when it agrees, or
+        veto the product outright when it confidently shows a different garment.
         Calibrated on the labeled fixtures: F1 0.89 vs keyword's 0.84
         (precision 0.86 vs 0.74). Deterministic intent policy still runs
         first — ranking never overrides policy.
@@ -224,9 +269,7 @@ class ShoppingAgent(BaseAgent):
             self._embeddings = EmbeddingService()
 
         normalized_intent = normalize_shopping_intent(shopping_intent)
-        intent_prefix = {"menswear": "men's", "womenswear": "women's"}.get(normalized_intent, "")
-        style_text = (style or "").replace("_", " ")
-        spec = " ".join(part for part in (intent_prefix, color, allowed_item_type, style_text) if part)
+        spec = build_item_spec(item_type=allowed_item_type, color=color, style=style, shopping_intent=shopping_intent)
         opposite_gender = {"menswear": "womenswear", "womenswear": "menswear"}.get(normalized_intent)
 
         spec_embedding, title_embeddings = await asyncio.gather(
@@ -253,19 +296,36 @@ class ShoppingAgent(BaseAgent):
                 if predicted_gender == opposite_gender:
                     continue
 
+            # Accept/reject on the text scale alone. ``title_sim`` is a text-text
+            # cosine (~0.5-0.8 for real matches) whereas a text-image cosine sits
+            # near 0.1-0.35 — CLIP never trained the two to share a scale. The
+            # previous 0.6/0.4 blend was compared against a threshold calibrated
+            # on text-only similarity, so it rejected every live product.
             title_sim = cosine_similarity(spec_embedding, title_emb)
-            if thumb_emb is not None:
-                thumb_sim = cosine_similarity(spec_embedding, thumb_emb)
-                score = 0.6 * title_sim + 0.4 * thumb_sim
-                reason = f"zero-shot gates passed; similarity title {title_sim:.2f}, image {thumb_sim:.2f}"
-            else:
-                score = title_sim
-                reason = f"zero-shot gates passed; similarity title {title_sim:.2f}"
-
-            if score < threshold:
+            if title_sim < threshold:
                 continue
+
+            score = title_sim
+            facts = ["zero-shot gates passed", f"title similarity {title_sim:.2f}"]
+
+            if thumb_emb is not None:
+                # Classify the thumbnail against the shared prompt set instead of
+                # cosine-comparing it to the spec: a softmax probability *is*
+                # comparable across modalities, a raw cross-modal cosine is not.
+                thumb_type, thumb_conf = classify_embedding(thumb_emb, "clothing_type")
+                if thumb_type == allowed_item_type:
+                    score = min(1.0, score + IMAGE_AGREEMENT_BONUS * thumb_conf)
+                    facts.append(f"thumbnail agrees ({thumb_conf:.2f})")
+                elif thumb_conf >= IMAGE_VETO_MIN_CONFIDENCE:
+                    # The picture confidently shows a different garment than the
+                    # title claims — trust the picture and drop the product.
+                    continue
+                else:
+                    facts.append("thumbnail inconclusive")
+
             product.match_score = round(min(max(score, 0.0), 1.0), 2)
-            product.match_reason = reason
+            product.match_reason = "; ".join(facts)
+            product.match_evidence = facts
             result.append(product)
 
         result.sort(key=lambda item: getattr(item, "match_score", 0.0), reverse=True)
@@ -295,6 +355,72 @@ class ShoppingAgent(BaseAgent):
             style=style,
             shopping_intent=shopping_intent,
         )
+
+    @staticmethod
+    def _budget_inr(ctx: AgentContext) -> int | None:
+        """The stated outfit budget, as a per-item ceiling.
+
+        The intent budget covers the whole look, so it is a loose bound on any
+        single product — but a loose bound still removes the ₹40,000 blazer
+        from a ₹5,000 outfit before the verifier has to reject the result.
+        """
+        intent = intent_from_context(ctx)
+        if intent is None or intent.budget_total_inr is None:
+            return None
+        return int(intent.budget_total_inr)
+
+    async def _catalog_products(
+        self,
+        keys: list[tuple[str, str, str]],
+        *,
+        shopping_intent: str,
+        budget_inr: int | None,
+    ) -> dict[tuple[str, str, str], list[ProductLink]]:
+        """Fill as many outfit slots as possible from the local corpus.
+
+        Catalog hits skip the zero-shot gates the live path applies: those
+        gates re-derive at request time what ingestion already established
+        (see :mod:`backend.jobs.catalog_ingest`), and the cross-encoder score
+        is a better relevance signal than title cosine anyway.
+
+        Retrieval is best-effort. A missing table, an empty corpus or a failed
+        model load all resolve to "no catalog results", which the caller reads
+        as "ask the provider" — the same graceful degradation as every other
+        optional dependency in the pipeline.
+        """
+        if not self._settings.catalog_retrieval_enabled or not keys:
+            return {}
+
+        limit = self._settings.shopping_results_per_item
+        minimum = self._settings.catalog_min_score
+        gender_lean = _GENDER_LEAN_BY_INTENT.get(normalize_shopping_intent(shopping_intent), "")
+
+        found: dict[tuple[str, str, str], list[ProductLink]] = {}
+        try:
+            async with async_session_factory() as session:
+                # Sequential by design: the cross-encoder is CPU-bound behind a
+                # two-worker pool, so concurrent queries would queue anyway
+                # while holding extra connections open.
+                for key in keys:
+                    item_type, color, style = key
+                    query = CatalogQuery(
+                        text=build_item_spec(
+                            item_type=item_type, color=color, style=style, shopping_intent=shopping_intent
+                        ),
+                        clothing_type=item_type,
+                        gender=gender_lean,
+                        max_price_inr=budget_inr,
+                    )
+                    hits = await self._catalog.search(session, query, limit=limit)
+                    products = [hit.to_product_link() for hit in hits if hit.score >= minimum]
+                    if products:
+                        found[key] = products
+        except Exception as exc:
+            logger.warning("catalog_retrieval_failed", error=str(exc))
+            return {}
+
+        logger.info("catalog_retrieval", slots=len(keys), slots_filled=len(found))
+        return found
 
     async def _execute(self, ctx: AgentContext) -> AgentContext:
         if not ctx.include_products:
@@ -327,16 +453,36 @@ class ShoppingAgent(BaseAgent):
                 if key not in query_cache:
                     query_cache[key] = []
 
-        # Fetch products for each unique query
-        for item_type, color, style in query_cache:
-            products = await self._tool.find_products(
-                item_type=item_type,
-                color=color,
-                style=style,
-                gender=ctx.gender,
-                shopping_intent=shopping_intent,
-            )
-            query_cache[(item_type, color, style)] = products
+        # The catalog answers first: it costs no API credits and its rows were
+        # already normalized onto the taxonomy at ingest.
+        catalog_products = await self._catalog_products(
+            list(query_cache),
+            shopping_intent=shopping_intent,
+            budget_inr=self._budget_inr(ctx),
+        )
+
+        # Only slots the catalog could not fill reach the provider. The queries
+        # are independent, so they run concurrently — sequentially this was
+        # ~8s x 12 queries. The semaphore keeps us from opening a dozen sockets
+        # at the provider at once.
+        unfilled = [key for key in query_cache if key not in catalog_products]
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_PRODUCT_QUERIES)
+
+        async def fetch(key: tuple[str, str, str]) -> tuple[tuple[str, str, str], list[ProductLink]]:
+            item_type, color, style = key
+            async with semaphore:
+                assert self._tool is not None
+                products = await self._tool.find_products(
+                    item_type=item_type,
+                    color=color,
+                    style=style,
+                    gender=ctx.gender,
+                    shopping_intent=shopping_intent,
+                )
+            return key, products
+
+        for key, products in await asyncio.gather(*(fetch(k) for k in unfilled)):
+            query_cache[key] = products
 
         # Attach products to items
         total_products = 0
@@ -351,18 +497,23 @@ class ShoppingAgent(BaseAgent):
                     item.products = []
                     continue
                 key = (item.item_type.lower(), item.color.lower(), item.style.lower())
-                item.products = await self._validate_products(
-                    query_cache.get(key, []),
-                    allowed_item_type=item.item_type,
-                    color=item.color,
-                    style=item.style,
-                    shopping_intent=shopping_intent,
-                )
+                if key in catalog_products:
+                    item.products = list(catalog_products[key])
+                else:
+                    item.products = await self._validate_products(
+                        query_cache.get(key, []),
+                        allowed_item_type=item.item_type,
+                        color=item.color,
+                        style=item.style,
+                        shopping_intent=shopping_intent,
+                    )
                 total_products += len(item.products)
 
         logger.info(
             "shopping_complete",
             unique_queries=len(query_cache),
+            catalog_slots=len(catalog_products),
+            provider_queries=len(unfilled),
             total_products=total_products,
         )
 

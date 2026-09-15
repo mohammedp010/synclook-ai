@@ -9,11 +9,14 @@ import pytest
 
 from backend.agents.base import AgentContext, AgentState
 from backend.agents.shopping_agent import ShoppingAgent
+from backend.core.config import get_settings
+from backend.models.records import ProductCatalogItem
 from backend.schemas.api import (
     ProductLink,
     Recommendation,
     RecommendationItem,
 )
+from backend.services.product_catalog import CatalogHit, CatalogQuery
 from backend.services.product_search import ProductSearchService
 from backend.tools.product_search import ProductSearchTool
 
@@ -521,3 +524,178 @@ class TestShoppingAgent:
         products = result.recommendations[0].items[0].products
         assert products[0].link == "https://example.com/stronger"
         assert products[0].match_score > products[1].match_score
+
+
+class TestThumbnailGating:
+    """Covers the thumbnail branch of the embedding matcher.
+
+    Regression guard for a live-only failure: the matcher used to blend a
+    text-text cosine with a text-image cosine and compare the mix against a
+    threshold calibrated on text alone, which rejected 100% of real products.
+    Every existing fixture used an unfetchable thumbnail, so the blended branch
+    never ran and the offline eval stayed green while production returned zero.
+    """
+
+    SPEC = [1.0, 0.0, 0.0]
+    TITLE = [0.8, 0.6, 0.0]  # unit vector; cosine vs SPEC = 0.80, above the 0.75 gate
+    THUMB = [0.0, 0.0, 1.0]  # orthogonal to SPEC: cosine-comparing it would score 0.0
+
+    def _agent(self):
+        embeddings = MagicMock()
+        embeddings.embed_text = AsyncMock(return_value=self.SPEC)
+        embeddings.embed_texts = AsyncMock(return_value=[self.TITLE])
+        embeddings.embed_image_url = AsyncMock(return_value=self.THUMB)
+        return ShoppingAgent(product_tool=None, embedding_service=embeddings)
+
+    @staticmethod
+    def _product():
+        return ProductLink(
+            title="White smart casual shirt for men",
+            price="₹999",
+            link="https://example.com/shirt",
+            thumbnail="https://cdn.example.com/real-thumb.jpg",
+            source="Store",
+        )
+
+    def _classifier(self, thumb_result):
+        """Fake zero-shot heads: titles always match, thumbnails are scripted."""
+
+        def fake(embedding, head):
+            if embedding == self.THUMB:
+                return thumb_result
+            return {"clothing_type": ("shirt", 0.9), "color": ("white", 0.9), "gender": ("menswear", 0.9)}[head]
+
+        return fake
+
+    async def _validate(self, thumb_result):
+        agent = self._agent()
+        with patch("backend.agents.shopping_agent.classify_embedding", self._classifier(thumb_result)):
+            return await agent._validate_products_embedding(
+                [self._product()],
+                allowed_item_type="shirt",
+                color="white",
+                style="smart_casual",
+                shopping_intent="menswear",
+            )
+
+    @pytest.mark.asyncio
+    async def test_fetchable_thumbnail_does_not_reject_a_good_product(self):
+        kept = await self._validate(("shirt", 0.8))
+
+        assert len(kept) == 1, "a fetchable thumbnail must not sink a product that passed every gate"
+        assert kept[0].match_score >= 0.8  # stays on the text scale, plus the agreement bonus
+        assert "thumbnail agrees" in kept[0].match_reason
+
+    @pytest.mark.asyncio
+    async def test_confident_thumbnail_disagreement_vetoes_the_product(self):
+        assert await self._validate(("shoes", 0.9)) == []
+
+    @pytest.mark.asyncio
+    async def test_unsure_thumbnail_disagreement_is_ignored(self):
+        kept = await self._validate(("shoes", 0.2))
+
+        assert len(kept) == 1
+        assert "thumbnail inconclusive" in kept[0].match_reason
+
+
+class _StubCatalog:
+    """Stands in for ProductCatalogService without a database or models."""
+
+    def __init__(self, hits_by_type: dict[str, list[CatalogHit]]) -> None:
+        self.hits_by_type = hits_by_type
+        self.queries: list[CatalogQuery] = []
+
+    async def search(self, db: object, query: CatalogQuery, *, limit: int) -> list[CatalogHit]:
+        self.queries.append(query)
+        return self.hits_by_type.get(query.clothing_type, [])[:limit]
+
+
+def _catalog_hit(title: str, score: float) -> CatalogHit:
+    item = ProductCatalogItem(
+        title=title,
+        price_display="₹2,499",
+        product_url=f"https://example.test/{title}",
+        thumbnail_url="",
+        store="Myntra",
+        source="fixture",
+    )
+    return CatalogHit(
+        item=item,
+        score=score,
+        reason="hybrid retrieval",
+        evidence=("Keyword search ranked it #1", "Cross-encoder relevance 0.97"),
+    )
+
+
+class TestCatalogRetrieval:
+    """The catalog answers before the provider does."""
+
+    @staticmethod
+    def _agent(catalog: _StubCatalog, monkeypatch: pytest.MonkeyPatch) -> ShoppingAgent:
+        monkeypatch.setattr(get_settings(), "catalog_retrieval_enabled", True)
+        return ShoppingAgent(product_tool=MagicMock(), catalog=catalog)  # type: ignore[arg-type]
+
+    @pytest.mark.asyncio
+    async def test_confident_hits_fill_the_slot(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        catalog = _StubCatalog({"blazer": [_catalog_hit("Navy Formal Blazer", 0.97)]})
+        agent = self._agent(catalog, monkeypatch)
+
+        found = await agent._catalog_products(
+            [("blazer", "navy", "formal")], shopping_intent="menswear", budget_inr=None
+        )
+
+        assert [p.title for p in found[("blazer", "navy", "formal")]] == ["Navy Formal Blazer"]
+
+    @pytest.mark.asyncio
+    async def test_retrieval_provenance_reaches_the_product(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Why a product was retrieved is as much a grounded fact as why an item
+        # was recommended — it has to survive the hop into the API schema.
+        catalog = _StubCatalog({"blazer": [_catalog_hit("Navy Formal Blazer", 0.97)]})
+        agent = self._agent(catalog, monkeypatch)
+
+        found = await agent._catalog_products(
+            [("blazer", "navy", "formal")], shopping_intent="menswear", budget_inr=None
+        )
+
+        product = found[("blazer", "navy", "formal")][0]
+        assert product.match_evidence == ["Keyword search ranked it #1", "Cross-encoder relevance 0.97"]
+        assert product.match_score == 0.97
+
+    @pytest.mark.asyncio
+    async def test_low_scoring_hits_leave_the_slot_for_the_provider(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Below `catalog_min_score` the corpus has nothing worth showing; the
+        # slot must stay unfilled so live search still runs for it.
+        catalog = _StubCatalog({"blazer": [_catalog_hit("Beige Linen Blazer", 0.11)]})
+        agent = self._agent(catalog, monkeypatch)
+
+        found = await agent._catalog_products(
+            [("blazer", "navy", "formal")], shopping_intent="menswear", budget_inr=None
+        )
+
+        assert found == {}
+
+    @pytest.mark.asyncio
+    async def test_query_carries_the_slot_constraints(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        catalog = _StubCatalog({})
+        agent = self._agent(catalog, monkeypatch)
+
+        await agent._catalog_products([("blazer", "navy", "formal")], shopping_intent="menswear", budget_inr=5000)
+
+        query = catalog.queries[0]
+        assert query.text == "men's navy blazer formal"
+        assert query.clothing_type == "blazer"
+        assert query.gender == "men"
+        assert query.max_price_inr == 5000
+
+    @pytest.mark.asyncio
+    async def test_disabled_retrieval_asks_no_questions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        catalog = _StubCatalog({"blazer": [_catalog_hit("Navy Formal Blazer", 0.97)]})
+        monkeypatch.setattr(get_settings(), "catalog_retrieval_enabled", False)
+        agent = ShoppingAgent(product_tool=MagicMock(), catalog=catalog)  # type: ignore[arg-type]
+
+        found = await agent._catalog_products(
+            [("blazer", "navy", "formal")], shopping_intent="menswear", budget_inr=None
+        )
+
+        assert found == {}
+        assert catalog.queries == []

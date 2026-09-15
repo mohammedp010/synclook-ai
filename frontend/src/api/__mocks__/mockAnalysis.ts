@@ -28,6 +28,15 @@ export const MOCK_ANALYSIS: AnalysisResponse = {
               link: "https://www.myntra.com/jeans/levis/511-slim-fit",
               thumbnail: "https://assets.myntassets.com/sample-jeans.jpg",
               source: "Myntra",
+              match_score: 0.87,
+              match_reason:
+                "hybrid retrieval; cross-encoder relevance 0.87",
+              match_evidence: [
+                "Keyword search ranked it #2",
+                "Vector search ranked it #1",
+                "Both retrieval arms agreed on it",
+                "Cross-encoder relevance 0.87",
+              ],
             },
           ],
         },
@@ -43,6 +52,14 @@ export const MOCK_ANALYSIS: AnalysisResponse = {
               link: "https://www.amazon.in/nike-air-force-1",
               thumbnail: "https://m.media-amazon.com/sample-nike.jpg",
               source: "Amazon.in",
+              match_score: 0.74,
+              match_reason:
+                "zero-shot gates passed; title similarity 0.71; thumbnail agrees (0.82)",
+              match_evidence: [
+                "zero-shot gates passed",
+                "title similarity 0.71",
+                "thumbnail agrees (0.82)",
+              ],
             },
           ],
         },

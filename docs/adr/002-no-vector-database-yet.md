@@ -1,6 +1,9 @@
 # ADR 002: No vector database (yet) — embeddings without the infrastructure
 
-**Status**: accepted (July 2026)
+**Status**: accepted (July 2026); superseded in part (September 2026) by
+[ADR 005](005-catalog-rag-hybrid-retrieval.md) — a product catalog was ingested, which is the
+condition this ADR itself named. The reasoning below still holds for wardrobe matching, which
+continues to scan in Python.
 
 ## Context
 
