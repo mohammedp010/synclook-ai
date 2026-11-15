@@ -11,8 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==2.3.3
+# Install Poetry (2.x moved `poetry export` into a plugin)
+RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export==1.10.1
 
 # Copy dependency files first (cache layer)
 COPY pyproject.toml poetry.lock* ./
@@ -47,15 +47,21 @@ COPY backend/ ./backend/
 COPY main.py .
 COPY alembic/ ./alembic/
 COPY alembic.ini .
+COPY data/demo_closet/ ./data/demo_closet/
 
-# Create upload directory
-RUN mkdir -p /app/uploads && chown -R synclook:synclook /app
+RUN chown -R synclook:synclook /app
 
 USER synclook
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/api/v1/health || exit 1
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# The host sets PORT (Render: 10000). Migrations run at boot because Render's free plan has no
+# pre-deploy command; on an up-to-date database it is one quick query.
+# 1 worker: measured peak RSS 157 MB (smoke run + 10 visitors at once, 1,750 requests); a free instance has 512 MB, and the
+# in-memory rate limits count per process.
+# --forwarded-allow-ips '*': trust the host's proxy for the visitor IP (rate limits) and https (MCP URLs);
+# only that proxy can reach the container.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --proxy-headers --forwarded-allow-ips '*'"]

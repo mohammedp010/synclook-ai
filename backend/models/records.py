@@ -1,168 +1,84 @@
 """ORM models for persistent storage."""
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
-from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, Computed, DateTime, Float, Integer, String, Text, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
+from sqlalchemy import Date, DateTime, LargeBinary, SmallInteger, String, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.db.base import Base
 
-# Dimensions are model-determined: BGE-small emits 384, CLIP ViT-B/32 emits 512.
-# They are constants rather than settings because changing either requires a
-# migration and a full re-embed, not a config flip.
-TEXT_EMBEDDING_DIM = 384
-IMAGE_EMBEDDING_DIM = 512
-
-# Full-text vector for the lexical arm of catalog search. Title and brand are
-# weighted above description so a term in the name outranks the same term
-# buried in marketing copy. Kept in sync with migration c3f81a2b7d64 -- the
-# expression is duplicated there because migrations must not import app code.
-_SEARCH_DOCUMENT_SQL = (
-    "setweight(to_tsvector('english', coalesce(title, '')), 'A') || "
-    "setweight(to_tsvector('english', coalesce(brand, '')), 'A') || "
-    "setweight(to_tsvector('english', coalesce(description, '')), 'B')"
-)
-
-
-class AnalysisRecord(Base):
-    """Stores each clothing analysis request and its results."""
-
-    __tablename__ = "analysis_records"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    image_path: Mapped[str] = mapped_column(String(512), nullable=False)
-    detected_attributes: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    recommendations: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
-
-class FeedbackRecord(Base):
-    """Stores user feedback on recommendations."""
-
-    __tablename__ = "feedback_records"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    recommendation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    user_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    feedback: Mapped[str] = mapped_column(String(16), nullable=False)  # "like" / "dislike"
-    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
 
 class WardrobeItem(Base):
-    """A garment the user owns, auto-tagged by the vision pipeline.
+    """One garment in a user's closet: the Phase 2 tags, a small JPEG and the upload's hash.
 
-    ``embedding`` stores the normalized CLIP image embedding as JSON. At
-    personal-wardrobe scale (hundreds of items) brute-force cosine in Python
-    is faster than a network round-trip; if wardrobes ever grow to catalog
-    scale, the migration path is a pgvector column + HNSW index.
+    ``user_id`` is an opaque string the client sends (no login). ``image_hash`` is the
+    SHA-256 of the uploaded bytes; one user cannot add the same photo twice.
     """
 
     __tablename__ = "wardrobe_items"
+    __table_args__ = (UniqueConstraint("user_id", "image_hash", name="uq_wardrobe_items_user_image"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    label: Mapped[str] = mapped_column(String(256), nullable=False, default="")
-    clothing_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    garment_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    category: Mapped[str] = mapped_column(String(16), nullable=False)
     color: Mapped[str] = mapped_column(String(32), nullable=False)
+    color_family: Mapped[str] = mapped_column(String(16), nullable=False)
+    color_hex: Mapped[str] = mapped_column(String(7), nullable=False)
+    secondary_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
     pattern: Mapped[str] = mapped_column(String(32), nullable=False, default="solid")
-    style: Mapped[str] = mapped_column(String(32), nullable=False)
-    embedding: Mapped[list[float]] = mapped_column(JSONB, nullable=False)
+    formality: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    warmth: Mapped[str] = mapped_column(String(8), nullable=False)
+    occasions: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    short_label: Mapped[str] = mapped_column(String(64), nullable=False)
+    item_count: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
+    image: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    # shortcut: photos live in Postgres because free hosts have no persistent disk; move to object storage
+    # if items exceed a few thousand.
+    image_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class EvaluationRun(Base):
-    """One execution of one evaluation suite, for tracking metrics over time.
+class WearEvent(Base):
+    """One outfit a user wore, saved or skipped (``engine.preferences`` counts these).
 
-    The suites measure different things (structural quality, product matching,
-    retrieval ranking, LLM-judged grounding) but they answer the same question
-    — did this commit make the system better or worse — so they share a table
-    and are told apart by ``suite``. ``metrics`` is deliberately schemaless:
-    each suite reports its own numbers, and a migration per new metric would
-    make adding one expensive enough to discourage it.
+    ``item_ids`` is a JSON list of ``wardrobe_items`` ids, not foreign keys: deleting an
+    item keeps the history, and the counting ignores ids no longer in the closet.
     """
 
-    __tablename__ = "evaluation_runs"
+    __tablename__ = "wear_events"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    suite: Mapped[str] = mapped_column(String(32), nullable=False, default="harness", index=True)
-    git_sha: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
-    num_cases: Mapped[int] = mapped_column(Integer, nullable=False)
-    metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    item_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    action: Mapped[str] = mapped_column(String(8), nullable=False)
+    occasion: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    day: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class ProductCatalogItem(Base):
-    """A product in the local retrieval corpus.
+class KvCacheEntry(Base):
+    """One cached JSON value (``services.cache.KvCache``); stale once ``expires_at`` passes."""
 
-    Unlike the live-search path — which queries a provider per request and
-    filters whatever comes back — catalog items are ingested ahead of time,
-    normalized onto the project's own taxonomy, and embedded once. That makes
-    retrieval reproducible (the same query returns the same corpus) and moves
-    embedding cost out of the request path.
+    __tablename__ = "kv_cache"
 
-    Two vector columns, deliberately different sizes: ``text_embedding`` is a
-    384-dim BGE sentence embedding used for semantic search over product copy,
-    ``image_embedding`` is the 512-dim CLIP embedding already used everywhere
-    else, kept so a garment photo can be matched against product imagery
-    without a second model. ``search_document`` backs the lexical arm of the
-    hybrid query; it is maintained by a trigger-free generated column so it can
-    never drift from the text it indexes.
+    key: Mapped[str] = mapped_column(String(256), primary_key=True)
+    value: Mapped[Any] = mapped_column(JSONB, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
+class McpKey(Base):
+    """The secret in one closet's MCP URL (``backend/mcp_server.py``), one per closet.
+
+    Only the key's SHA-256 is stored, so a copy of the database holds no working URL. Asking for a
+    new key overwrites the row, which turns the old URL off.
     """
 
-    __tablename__ = "product_catalog_items"
+    __tablename__ = "mcp_keys"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    # Provenance. (source, external_id) is the idempotency key for re-ingestion.
-    source: Mapped[str] = mapped_column(String(32), nullable=False)
-    external_id: Mapped[str] = mapped_column(String(256), nullable=False)
-
-    title: Mapped[str] = mapped_column(Text, nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    brand: Mapped[str] = mapped_column(String(128), nullable=False, default="")
-    store: Mapped[str] = mapped_column(String(128), nullable=False, default="")
-    product_url: Mapped[str] = mapped_column(Text, nullable=False)
-    thumbnail_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
-
-    # Whole rupees, matching `StyleIntent.budget_total_inr` so budget checks
-    # need no conversion; the provider's display string is kept verbatim for
-    # the UI. Nullable because listings without a parseable price still belong
-    # in the corpus -- they are simply exempt from price filtering.
-    price_inr: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    price_display: Mapped[str] = mapped_column(String(64), nullable=False, default="")
-
-    # Normalized onto the project taxonomy at ingest so retrieval filters and
-    # the rule engine speak the same language.
-    clothing_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
-    color: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
-    style: Mapped[str] = mapped_column(String(32), nullable=False, default="")
-    gender_lean: Mapped[str] = mapped_column(String(16), nullable=False, default="unisex", index=True)
-
-    text_embedding: Mapped[list[float]] = mapped_column(Vector(TEXT_EMBEDDING_DIM), nullable=False)
-    image_embedding: Mapped[list[float] | None] = mapped_column(Vector(IMAGE_EMBEDDING_DIM), nullable=True)
-
-    # Availability freshness — stale rows can be demoted or filtered rather
-    # than silently served as if they were still buyable.
-    in_stock: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    user_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    key_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
-    # Maintained by PostgreSQL, never written from Python: `Computed` marks it
-    # read-only for INSERT/UPDATE, and it is deferred because nothing in the
-    # application reads the vector itself -- only the index does.
-    search_document: Mapped[str] = mapped_column(
-        TSVECTOR,
-        Computed(_SEARCH_DOCUMENT_SQL, persisted=True),
-        nullable=False,
-        deferred=True,
-    )
-
-    __table_args__ = (UniqueConstraint("source", "external_id", name="uq_product_catalog_source_external_id"),)

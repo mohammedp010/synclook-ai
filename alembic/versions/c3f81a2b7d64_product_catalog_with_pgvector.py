@@ -19,84 +19,24 @@ Index choices:
   The column is ``GENERATED ALWAYS`` so the index can never drift from the text
   it describes; weighting title above description (``setweight`` A vs B) means
   a term in the title outranks the same term buried in copy.
+
+Emptied in the closet-first redesign: the catalogue retrieval stack and
+pgvector were removed, and ``a1c0f1e5d2b3`` drops this table where it exists.
+Left as a no-op so a fresh database needs neither the ``vector`` extension nor
+the ``pgvector`` package, and existing databases keep a valid history.
 """
 
 from collections.abc import Sequence
-
-import sqlalchemy as sa
-from pgvector.sqlalchemy import Vector
-from sqlalchemy.dialects import postgresql
-
-from alembic import op
 
 revision: str = "c3f81a2b7d64"
 down_revision: str | Sequence[str] | None = "9b02c7e1a4d3"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-TEXT_EMBEDDING_DIM = 384
-IMAGE_EMBEDDING_DIM = 512
-
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
-
-    op.create_table(
-        "product_catalog_items",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("source", sa.String(32), nullable=False),
-        sa.Column("external_id", sa.String(256), nullable=False),
-        sa.Column("title", sa.Text(), nullable=False),
-        sa.Column("description", sa.Text(), nullable=False, server_default=""),
-        sa.Column("brand", sa.String(128), nullable=False, server_default=""),
-        sa.Column("store", sa.String(128), nullable=False, server_default=""),
-        sa.Column("product_url", sa.Text(), nullable=False),
-        sa.Column("thumbnail_url", sa.Text(), nullable=False, server_default=""),
-        sa.Column("price_inr", sa.Integer(), nullable=True),
-        sa.Column("price_display", sa.String(64), nullable=False, server_default=""),
-        sa.Column("clothing_type", sa.String(32), nullable=False),
-        sa.Column("color", sa.String(32), nullable=False),
-        sa.Column("style", sa.String(32), nullable=False, server_default=""),
-        sa.Column("gender_lean", sa.String(16), nullable=False, server_default="unisex"),
-        sa.Column("text_embedding", Vector(TEXT_EMBEDDING_DIM), nullable=False),
-        sa.Column("image_embedding", Vector(IMAGE_EMBEDDING_DIM), nullable=True),
-        sa.Column("in_stock", sa.Boolean(), nullable=False, server_default=sa.true()),
-        sa.Column("last_seen_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.UniqueConstraint("source", "external_id", name="uq_product_catalog_source_external_id"),
-    )
-
-    op.create_index("ix_product_catalog_items_clothing_type", "product_catalog_items", ["clothing_type"])
-    op.create_index("ix_product_catalog_items_color", "product_catalog_items", ["color"])
-    op.create_index("ix_product_catalog_items_gender_lean", "product_catalog_items", ["gender_lean"])
-    op.create_index("ix_product_catalog_items_price_inr", "product_catalog_items", ["price_inr"])
-
-    op.execute(
-        """
-        ALTER TABLE product_catalog_items
-        ADD COLUMN search_document tsvector
-        GENERATED ALWAYS AS (
-            setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-            setweight(to_tsvector('english', coalesce(brand, '')), 'A') ||
-            setweight(to_tsvector('english', coalesce(description, '')), 'B')
-        ) STORED
-        """
-    )
-    op.execute("CREATE INDEX ix_product_catalog_search_document ON product_catalog_items USING GIN (search_document)")
-
-    op.execute(
-        "CREATE INDEX ix_product_catalog_text_embedding ON product_catalog_items "
-        "USING hnsw (text_embedding vector_cosine_ops)"
-    )
-    op.execute(
-        "CREATE INDEX ix_product_catalog_image_embedding ON product_catalog_items "
-        "USING hnsw (image_embedding vector_cosine_ops)"
-    )
+    """No-op (see module docstring)."""
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    op.drop_table("product_catalog_items")
-    # The extension is intentionally left installed: other objects may depend on
-    # it, and dropping it is a database-wide decision, not this table's call.
+    """No-op (see module docstring)."""

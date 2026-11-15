@@ -1,0 +1,80 @@
+[
+  {"text": "board meeting with the directors tomorrow", "occasion": "business_formal", "also": []},
+  {"text": "presenting to clients at a corporate law firm", "occasion": "business_formal", "also": []},
+  {"text": "first day at a bank where suits are expected", "occasion": "business_formal", "also": []},
+  {"text": "annual general meeting, I'm speaking on stage", "occasion": "business_formal", "also": []},
+
+  {"text": "something to wear to the office", "occasion": "business_casual", "also": []},
+  {"text": "a regular workday, our dress code is relaxed", "occasion": "business_casual", "also": []},
+  {"text": "what should I wear to work on Monday", "occasion": "business_casual", "also": []},
+  {"text": "team meeting at the office, nothing too stiff", "occasion": "business_casual", "also": []},
+
+  {"text": "brunch with friends, I want to look put together", "occasion": "smart_casual", "also": []},
+  {"text": "visiting an art gallery this afternoon", "occasion": "smart_casual", "also": ["everyday_casual"]},
+  {"text": "casual Friday but I want to look sharp", "occasion": "smart_casual", "also": ["business_casual"]},
+  {"text": "lunch with my girlfriend's parents", "occasion": "smart_casual", "also": []},
+
+  {"text": "a casual outing with friends", "occasion": "everyday_casual", "also": []},
+  {"text": "running errands and grabbing a coffee", "occasion": "everyday_casual", "also": []},
+  {"text": "college classes tomorrow", "occasion": "everyday_casual", "also": []},
+  {"text": "just hanging out at the mall", "occasion": "everyday_casual", "also": []},
+
+  {"text": "a party this weekend", "occasion": "party_night_out", "also": []},
+  {"text": "going clubbing on Saturday", "occasion": "party_night_out", "also": []},
+  {"text": "my friend's birthday party at a bar", "occasion": "party_night_out", "also": []},
+  {"text": "night out in Bandra with the boys", "occasion": "party_night_out", "also": []},
+
+  {"text": "an evening cocktail party", "occasion": "cocktail_semi_formal", "also": []},
+  {"text": "a semi-formal company dinner", "occasion": "cocktail_semi_formal", "also": ["business_formal"]},
+  {"text": "an awards night reception at a five-star hotel", "occasion": "cocktail_semi_formal", "also": ["business_formal"]},
+  {"text": "product launch event with drinks after work", "occasion": "cocktail_semi_formal", "also": ["party_night_out"]},
+
+  {"text": "going to a wedding", "occasion": "wedding_guest", "also": []},
+  {"text": "my cousin's sangeet next week", "occasion": "wedding_guest", "also": ["festive_ethnic"]},
+  {"text": "a friend's wedding reception", "occasion": "wedding_guest", "also": []},
+  {"text": "attending a nikah ceremony", "occasion": "wedding_guest", "also": ["festive_ethnic"]},
+
+  {"text": "Diwali celebration at my aunt's place", "occasion": "festive_ethnic", "also": []},
+  {"text": "Eid lunch with the family", "occasion": "festive_ethnic", "also": []},
+  {"text": "Ganesh puja in our housing society", "occasion": "festive_ethnic", "also": []},
+  {"text": "Navratri garba night", "occasion": "festive_ethnic", "also": ["party_night_out"]},
+
+  {"text": "a beach holiday in Goa", "occasion": "beach_resort", "also": []},
+  {"text": "pool party at a resort", "occasion": "beach_resort", "also": ["party_night_out"]},
+  {"text": "a weekend in the Maldives", "occasion": "beach_resort", "also": ["travel_commute"]},
+  {"text": "vacation in Bali, it's going to be hot", "occasion": "beach_resort", "also": []},
+
+  {"text": "heading to the gym", "occasion": "gym_athleisure", "also": []},
+  {"text": "morning run in the park", "occasion": "gym_athleisure", "also": []},
+  {"text": "yoga class at 7", "occasion": "gym_athleisure", "also": []},
+  {"text": "playing badminton with colleagues", "occasion": "gym_athleisure", "also": []},
+
+  {"text": "travelling all day tomorrow", "occasion": "travel_commute", "also": []},
+  {"text": "a long flight to London", "occasion": "travel_commute", "also": []},
+  {"text": "overnight train to Jaipur", "occasion": "travel_commute", "also": []},
+  {"text": "my daily metro commute", "occasion": "travel_commute", "also": ["business_casual"]},
+
+  {"text": "dinner date tonight", "occasion": "date_night", "also": []},
+  {"text": "taking my wife out for her birthday dinner", "occasion": "date_night", "also": []},
+  {"text": "first date at a coffee shop", "occasion": "date_night", "also": ["smart_casual"]},
+  {"text": "anniversary dinner at a fancy restaurant", "occasion": "date_night", "also": ["cocktail_semi_formal"]},
+
+  {"text": "I have a job interview", "occasion": "interview", "also": []},
+  {"text": "campus placement interview", "occasion": "interview", "also": []},
+  {"text": "final round with the hiring manager", "occasion": "interview", "also": []},
+  {"text": "internship interview at a startup", "occasion": "interview", "also": []},
+
+  {"text": "a lazy Sunday at home", "occasion": "loungewear", "also": []},
+  {"text": "work from home day", "occasion": "loungewear", "also": ["business_casual"]},
+  {"text": "binge-watching Netflix on the couch", "occasion": "loungewear", "also": []},
+  {"text": "comfy clothes for a sleepover at my friend's", "occasion": "loungewear", "also": []},
+
+  {"text": "something in navy under 3000", "occasion": null, "also": []},
+  {"text": "I don't like skinny jeans", "occasion": null, "also": []},
+  {"text": "make it look more modern", "occasion": null, "also": []},
+  {"text": "what goes well with this?", "occasion": null, "also": []},
+  {"text": "I want an update on my style", "occasion": null, "also": []},
+  {"text": "something weird and fun", "occasion": null, "also": []},
+  {"text": "show me options, budget 5000", "occasion": null, "also": []},
+  {"text": "I prefer earthy colours", "occasion": null, "also": []}
+]

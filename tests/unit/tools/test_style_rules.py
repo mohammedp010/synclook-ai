@@ -1,8 +1,10 @@
 """Unit tests for StyleRuleEngineTool."""
 
-from backend.schemas.clothing import ClothingType, Pattern, Style
+from backend.schemas.clothing import ClothingType, Pattern
+from backend.schemas.taxonomy import Occasion
 from backend.tools.style_rules import (
     ITEM_PAIRINGS,
+    OCCASION_ALLOWED_ITEMS,
     StyleRuleEngineTool,
 )
 
@@ -81,61 +83,7 @@ class TestStyleRuleEngineTool:
         assert structure["required"] == ["topwear"]
         assert structure["optional"] == ["outerwear", "footwear", "accessory"]
 
-    def test_safe_fallback_items_for_bottomwear(self) -> None:
-        result = self.tool.get_safe_fallback_items(
-            ClothingType.TROUSERS,
-            detected_style=Style.STREETWEAR,
-            gender="male",
-        )
-        assert ClothingType.BLOUSE not in result
-        assert ClothingType.TSHIRT in result
-
-    # ── style compatibility ──────────────────────────────────────────
-
-    def test_compatible_styles_returns_list(self) -> None:
-        result = self.tool.get_compatible_styles(Style.FORMAL)
-        assert isinstance(result, list)
-        assert len(result) > 0
-
-    def test_same_style_always_compatible(self) -> None:
-        for style in Style:
-            assert self.tool.is_style_compatible(style, style)
-
-    def test_formal_not_compatible_with_streetwear(self) -> None:
-        assert not self.tool.is_style_compatible(Style.FORMAL, Style.STREETWEAR)
-
-    def test_casual_compatible_with_streetwear(self) -> None:
-        assert self.tool.is_style_compatible(Style.CASUAL, Style.STREETWEAR)
-
-    def test_smart_casual_compatible_with_formal(self) -> None:
-        assert self.tool.is_style_compatible(Style.SMART_CASUAL, Style.FORMAL)
-
-    def test_streetwear_disallows_blazer(self) -> None:
-        assert not self.tool.is_item_allowed_for_style(Style.STREETWEAR, ClothingType.BLAZER)
-
-    def test_formal_allows_blazer(self) -> None:
-        assert self.tool.is_item_allowed_for_style(Style.FORMAL, ClothingType.BLAZER)
-
-    def test_styles_allow_footwear_and_accessories(self) -> None:
-        for style in Style:
-            assert self.tool.is_item_allowed_for_style(style, ClothingType.SHOES)
-            assert self.tool.is_item_allowed_for_style(style, ClothingType.ACCESSORY)
-
     # ── pattern compatibility ────────────────────────────────────────
-
-    def test_paired_patterns_returns_list(self) -> None:
-        result = self.tool.get_paired_patterns(Pattern.SOLID)
-        assert isinstance(result, list)
-        assert len(result) > 0
-
-    def test_solid_pairs_with_everything(self) -> None:
-        # Solid should have the most pattern pairings
-        solid_pairs = self.tool.get_paired_patterns(Pattern.SOLID)
-        assert len(solid_pairs) >= 3
-
-    def test_striped_pairs_only_with_solid(self) -> None:
-        result = self.tool.get_paired_patterns(Pattern.STRIPED)
-        assert result == [Pattern.SOLID]
 
     def test_is_pattern_compatible_solid_with_striped(self) -> None:
         assert self.tool.is_pattern_compatible(Pattern.SOLID, Pattern.STRIPED)
@@ -143,25 +91,36 @@ class TestStyleRuleEngineTool:
     def test_striped_not_compatible_with_floral(self) -> None:
         assert not self.tool.is_pattern_compatible(Pattern.STRIPED, Pattern.FLORAL)
 
-    # ── compute_match_score ──────────────────────────────────────────
 
-    def test_score_always_between_0_and_1(self) -> None:
-        for style in Style:
-            for pattern in Pattern:
-                score = self.tool.compute_match_score(style, style, pattern)
-                assert 0.0 <= score <= 1.0
+class TestOccasionRules:
+    """Phase 5: a named occasion owns the item gate and the colour policy."""
 
-    def test_same_style_solid_pattern_gets_high_score(self) -> None:
-        score = self.tool.compute_match_score(Style.CASUAL, Style.CASUAL, Pattern.SOLID)
-        # base 0.5 + compatible 0.25 + same 0.1 + solid 0.1 = 0.95
-        assert score == 0.95
+    def setup_method(self) -> None:
+        self.tool = StyleRuleEngineTool()
 
-    def test_compatible_style_gets_bonus(self) -> None:
-        score_compatible = self.tool.compute_match_score(Style.CASUAL, Style.STREETWEAR, Pattern.SOLID)
-        score_incompatible = self.tool.compute_match_score(Style.FORMAL, Style.STREETWEAR, Pattern.SOLID)
-        assert score_compatible > score_incompatible
+    def test_every_occasion_has_items(self) -> None:
+        for occasion in Occasion:
+            assert OCCASION_ALLOWED_ITEMS[occasion]
 
-    def test_solid_pattern_gives_bonus(self) -> None:
-        score_solid = self.tool.compute_match_score(Style.CASUAL, Style.CASUAL, Pattern.SOLID)
-        score_striped = self.tool.compute_match_score(Style.CASUAL, Style.CASUAL, Pattern.STRIPED)
-        assert score_solid > score_striped
+    def test_occasion_gate_fixes_what_the_style_route_got_wrong(self) -> None:
+        # Each of these was a judged-adherence miss under occasion → Style.
+        assert not self.tool.is_item_allowed_for_occasion(Occasion.BUSINESS_FORMAL, ClothingType.CHINOS)
+        assert not self.tool.is_item_allowed_for_occasion(Occasion.GYM_ATHLEISURE, ClothingType.TROUSERS)
+        assert not self.tool.is_item_allowed_for_occasion(Occasion.BEACH_RESORT, ClothingType.BLAZER)
+        assert not self.tool.is_item_allowed_for_occasion(Occasion.FESTIVE_ETHNIC, ClothingType.SHORTS)
+        assert not self.tool.is_item_allowed_for_occasion(Occasion.LOUNGEWEAR, ClothingType.SHOES)
+
+    def test_formal_footwear_is_black_or_brown(self) -> None:
+        colours = self.tool.occasion_colors(Occasion.INTERVIEW, "footwear", ["white", "grey", "brown"])
+        assert colours == ["brown"]
+        # Nothing proposed survives → the policy's palette stands in.
+        assert self.tool.occasion_colors(Occasion.INTERVIEW, "footwear", ["white", "red"]) == ["black", "brown"]
+
+    def test_no_white_look_at_a_wedding_but_a_white_shirt_is_fine(self) -> None:
+        assert "white" not in self.tool.occasion_colors(Occasion.WEDDING_GUEST, "bottomwear", ["white", "navy"])
+        assert "cream" not in self.tool.occasion_colors(Occasion.FESTIVE_ETHNIC, "outerwear", ["cream", "maroon"])
+        assert self.tool.occasion_colors(Occasion.WEDDING_GUEST, "topwear", ["white", "navy"]) == ["white", "navy"]
+
+    def test_casual_occasions_leave_colour_to_the_colour_rules(self) -> None:
+        proposed = ["red", "white", "yellow"]
+        assert self.tool.occasion_colors(Occasion.BEACH_RESORT, "bottomwear", proposed) == proposed

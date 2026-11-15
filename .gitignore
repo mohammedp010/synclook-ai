@@ -46,3 +46,36 @@ graphify-out/
 # Claude Code local tooling (machine-specific hooks/settings, not project code)
 .claude/
 CLAUDE.md
+
+# MCP browser scratch (page snapshots, console logs, upload fixtures)
+.playwright-mcp/
+
+# Perception eval images. The labels (data/perception/labels.jsonl) are always
+# committed; the photos depend on where they came from.
+#
+# holdout/ and adversarial/ are personal wardrobe shots and this repo is public,
+# so they stay out — see data/perception/README.md for the reproducibility
+# tradeoff that implies.
+#
+# public/ is the exception: every file is CC/PD-licensed from Wikimedia Commons
+# and carries its author and licence in the label, so it is redistributable and
+# committing it makes that split's numbers reproducible by anyone.
+data/perception/images/**
+# Re-admit the split directories first — git will not look inside an excluded
+# directory, so without this the .gitkeep rule below can never match.
+!data/perception/images/*/
+!data/perception/images/**/.gitkeep
+!data/perception/images/public/**
+
+# Cached VLM replies from the perception eval — reproducible, and they cost money to regenerate.
+data/perception/.vlm_cache/
+# Cached Jev judgments and text-model replies from the evals, same reasoning.
+data/perception/.judge_cache/
+evaluation/.cache/
+
+# MCP browser scratch (page snapshots, console logs, upload fixtures)
+.playwright-mcp/
+
+# Planning notes stay local (never published)
+BACKEND_IMPROVEMENT_PLAN.md
+PERCEPTION_PROGRESS.md

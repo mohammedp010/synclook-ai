@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Synclook — perception labeling</title>
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--line:#252a34;--ink:#e8eaed;--dim:#9aa0ab;--acc:#6ea8fe;--ok:#4ade80}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+#wrap{display:grid;grid-template-columns:minmax(320px,44vw) 1fr;height:100vh}
+#left{border-right:1px solid var(--line);display:flex;flex-direction:column;background:#0b0d11}
+#imgbox{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:12px}
+#img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+#meta{padding:10px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);display:flex;justify-content:space-between;gap:10px}
+#right{overflow-y:auto;padding:16px 20px 120px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:20px 0 8px;font-weight:600}
+h2:first-child{margin-top:0}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button.opt{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:6px 10px;border-radius:7px;cursor:pointer;font-size:13px}
+button.opt:hover{border-color:var(--acc)}
+button.opt.on{background:var(--acc);border-color:var(--acc);color:#0b0d11;font-weight:600}
+.sw{width:38px;height:38px;border-radius:8px;border:2px solid var(--line);cursor:pointer;position:relative}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--acc)}
+.sw span{position:absolute;bottom:-15px;left:0;right:0;font-size:9px;color:var(--dim);text-align:center;white-space:nowrap;overflow:hidden}
+.swrow{display:flex;flex-wrap:wrap;gap:6px 6px;row-gap:22px}
+input[type=text],input[type=number]{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:7px;font-size:13px}
+#typeq{width:100%;margin-bottom:8px}
+#bar{position:fixed;left:0;right:0;bottom:0;background:#12151b;border-top:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:14px;z-index:5}
+#bar .grow{flex:1}
+#save{background:var(--ok);color:#06240f;border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px}
+#prog{height:5px;background:var(--line);border-radius:3px;overflow:hidden;width:180px}
+#prog i{display:block;height:100%;background:var(--ok)}
+.hint{color:var(--dim);font-size:11px}
+.cat{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px}
+kbd{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px}
+#done{color:var(--ok);font-weight:600}
+#lvl{color:var(--dim);font-size:12px;margin-top:6px;min-height:16px}
+.hide{display:none}
+</style></head><body>
+<div id="wrap">
+  <div id="left">
+    <div id="imgbox"><img id="img" alt=""></div>
+    <div id="meta"><span id="name"></span><span id="pos"></span></div>
+  </div>
+  <div id="right">
+    <h2>Photo</h2>
+    <div class="row" id="kinds"></div>
+    <div class="row" style="margin-top:8px;align-items:center;gap:10px">
+      <label class="hint">garments visible</label><input type="number" id="count" min="0" max="8" value="1" style="width:70px">
+    </div>
+    <div id="garment">
+      <h2>Garment type <span class="hint">— <kbd>/</kbd> to search</span></h2>
+      <input type="text" id="typeq" placeholder="type to filter…" autocomplete="off">
+      <div id="types"></div>
+      <h2>Primary colour</h2><div class="swrow" id="c1"></div>
+      <h2>Secondary colour <span class="hint">— optional</span></h2><div class="swrow" id="c2"></div>
+      <h2>Pattern</h2><div class="row" id="pat"></div>
+      <h2>Aesthetic</h2><div class="row" id="aes"></div>
+      <h2>Occasions <span class="hint">— pick every one it honestly works for</span></h2><div class="row" id="occ"></div>
+      <h2>Formality</h2><div class="row" id="fml"></div><div id="lvl"></div>
+    </div>
+    <h2>Notes</h2><input type="text" id="notes" style="width:100%" placeholder="optional">
+  </div>
+</div>
+<div id="bar">
+  <button id="save">Save &amp; next <kbd>↵</kbd></button>
+  <div id="prog"><i style="width:0"></i></div>
+  <span id="done"></span>
+  <span class="grow"></span>
+  <span class="hint"><kbd>←</kbd><kbd>→</kbd> move · <kbd>↵</kbd> save · <kbd>n</kbd> not a garment</span>
+</div>
+<script>
+let V=null,IMAGES=[],LABELS={},i=0;
+const S={kind:'on_body',count:1,type:null,c1:null,c2:null,pat:'solid',aes:'classic',occ:new Set(),fml:1,notes:''};
+const $=s=>document.querySelector(s);
+
+function chip(txt,on,fn,title){const b=document.createElement('button');b.className='opt'+(on?' on':'');b.textContent=txt;if(title)b.title=title;b.onclick=e=>{e.preventDefault();fn()};return b}
+function sw(name,hex,on,fn){const d=document.createElement('div');d.className='sw'+(on?' on':'');d.style.background=hex;d.title=name;d.onclick=fn;const s=document.createElement('span');s.textContent=name.replace(/_/g,' ');d.appendChild(s);return d}
+
+function renderTypes(){
+  const q=$('#typeq').value.trim().toLowerCase(),box=$('#types');box.innerHTML='';
+  const byCat={};
+  V.types.forEach(t=>{ if(q&&!t.value.includes(q))return; (byCat[t.category]=byCat[t.category]||[]).push(t.value)});
+  Object.keys(byCat).forEach(cat=>{
+    const h=document.createElement('div');h.className='cat';h.textContent=cat;box.appendChild(h);
+    const r=document.createElement('div');r.className='row';
+    byCat[cat].forEach(v=>r.appendChild(chip(v.replace(/_/g,' '),S.type===v,()=>{S.type=v;render()})));
+    box.appendChild(r);
+  });
+}
+function render(){
+  const im=IMAGES[i];
+  $('#img').src='/img/'+encodeURI(im);$('#name').textContent=im;
+  $('#pos').textContent=(i+1)+' / '+IMAGES.length+(LABELS[im]?'  ✓ labeled':'');
+  $('#kinds').innerHTML='';V.photo_kinds.forEach(k=>$('#kinds').appendChild(chip(k.replace(/_/g,' '),S.kind===k,()=>{S.kind=k;render()})));
+  $('#garment').className=S.kind==='not_garment'?'hide':'';
+  $('#count').value=S.count;
+  renderTypes();
+  $('#c1').innerHTML='';$('#c2').innerHTML='';
+  V.colors.forEach(c=>{const h=V.hex[c]||'#888';
+    $('#c1').appendChild(sw(c,h,S.c1===c,()=>{S.c1=c;render()}));
+    $('#c2').appendChild(sw(c,h,S.c2===c,()=>{S.c2=(S.c2===c?null:c);render()}));});
+  $('#pat').innerHTML='';V.patterns.forEach(p=>$('#pat').appendChild(chip(p.replace(/_/g,' '),S.pat===p,()=>{S.pat=p;render()})));
+  $('#aes').innerHTML='';V.aesthetics.forEach(a=>$('#aes').appendChild(chip(a.replace(/_/g,' '),S.aes===a,()=>{S.aes=a;render()})));
+  $('#occ').innerHTML='';V.occasions.forEach(o=>$('#occ').appendChild(chip(o.replace(/_/g,' '),S.occ.has(o),()=>{S.occ.has(o)?S.occ.delete(o):S.occ.add(o);render()})));
+  $('#fml').innerHTML='';V.formality.forEach(f=>$('#fml').appendChild(chip(f.level+' · '+f.label.replace(/_/g,' '),S.fml===f.level,()=>{S.fml=f.level;render()},f.criteria)));
+  const lv=V.formality.find(f=>f.level===S.fml);$('#lvl').textContent=lv?lv.criteria:'';
+  $('#notes').value=S.notes;
+  const n=Object.keys(LABELS).length;
+  $('#prog').firstElementChild.style.width=(100*n/Math.max(1,IMAGES.length))+'%';
+  $('#done').textContent=n+' / '+IMAGES.length+' labeled';
+}
+function loadInto(im){
+  const L=LABELS[im];
+  S.occ=new Set();S.notes='';S.c2=null;
+  if(!L){S.kind='on_body';S.count=1;S.type=null;S.c1=null;S.pat='solid';S.aes='classic';S.fml=1;return}
+  S.kind=L.photo_kind;S.count=L.garment_count;S.fml=L.formality;S.notes=L.notes||'';
+  (L.occasions||[]).forEach(o=>S.occ.add(o));
+  const p=L.primary;
+  if(p){S.type=p.type;S.c1=p.primary_color;S.c2=p.secondary_color||null;S.pat=p.pattern;S.aes=p.aesthetic}
+  else{S.type=null;S.c1=null}
+}
+function go(d){const n=i+d;if(n<0||n>=IMAGES.length)return;i=n;loadInto(IMAGES[i]);render()}
+function nextUnlabeled(){for(let k=0;k<IMAGES.length;k++){const j=(i+k)%IMAGES.length;if(!LABELS[IMAGES[j]]){i=j;loadInto(IMAGES[i]);render();return true}}return false}
+
+async function save(){
+  const im=IMAGES[i],notGarment=S.kind==='not_garment';
+  if(!notGarment&&(!S.type||!S.c1)){alert('Pick a garment type and a primary colour (or mark it "not a garment").');return}
+  const body={image:im,split:im.split('/')[0],is_garment_photo:!notGarment,photo_kind:S.kind,
+    garment_count:notGarment?0:Number($('#count').value||1),
+    primary:notGarment?null:{type:S.type,primary_color:S.c1,secondary_color:S.c2,pattern:S.pat,aesthetic:S.aes},
+    others:[],occasions:notGarment?[]:[...S.occ],formality:notGarment?1:S.fml,notes:$('#notes').value};
+  const r=await fetch('/api/label',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){alert('save failed: '+await r.text());return}
+  LABELS[im]=body;
+  if(!nextUnlabeled()){render();alert('Every image in this split is labeled. Nice.')}
+}
+
+document.addEventListener('keydown',e=>{
+  const typing=/^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if(e.key==='/'&&!typing){e.preventDefault();$('#typeq').focus();return}
+  if(typing&&e.key!=='Enter'&&e.key!=='Escape')return;
+  if(e.key==='Enter'){e.preventDefault();save()}
+  else if(e.key==='Escape'){e.target.blur()}
+  else if(e.key==='ArrowRight'){go(1)}
+  else if(e.key==='ArrowLeft'){go(-1)}
+  else if(e.key==='n'){S.kind='not_garment';render()}
+});
+$('#save').onclick=save;
+$('#typeq').oninput=renderTypes;
+$('#count').onchange=()=>{S.count=Number($('#count').value||1)};
+$('#notes').oninput=()=>{S.notes=$('#notes').value};
+
+fetch('/api/state').then(r=>r.json()).then(d=>{
+  V=d.vocab;IMAGES=d.images;LABELS=d.labels;
+  if(!IMAGES.length){document.body.innerHTML='<p style="padding:40px;font:16px system-ui;color:#e8eaed;background:#0f1115">No images found under <code>data/perception/images/</code>. Drop photos into <code>images/holdout/</code> and reload.</p>';return}
+  if(!nextUnlabeled()){loadInto(IMAGES[0]);render()}
+});
+</script></body></html>

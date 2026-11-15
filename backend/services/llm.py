@@ -1,33 +1,31 @@
-"""LLM Service — DeepSeek integration for the reasoning layer of the pipeline.
+"""LLM Service — the text model, over OpenRouter (one key with the vision model).
 
-Three capabilities, all constrained by deterministic validation downstream:
+Capabilities, all constrained by deterministic validation downstream:
 
 - ``extract_intent``: free-text request → structured ``StyleIntent``
-  (LangChain structured output over DeepSeek's OpenAI-compatible API)
+  (one ``json_schema`` response)
 - ``generate_grounded_explanation``: writes the outfit explanation strictly
   from rule-engine evidence — the LLM words the reasoning, it does not
   choose outfit items
-- ``critique_recommendations``: structured critic pass returning
-  ``RecommendationIssue`` objects for the verifier
+- ``structured``: the same parse for callers' own schemas
 
-Falls back gracefully when ``DEEPSEEK_API_KEY`` is unset: callers must treat
-``enabled=False`` as "use deterministic behavior".
+Every call raises ``LLMError`` when ``VLM_API_KEY`` (the OpenRouter key) is unset.
 """
 
 from __future__ import annotations
 
-import json
-from typing import Any
+from typing import Any, cast
 
-from langchain_openai import ChatOpenAI
 from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
-from pydantic import BaseModel, Field, SecretStr
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel, ValidationError
 
 from backend.core.config import Settings, get_settings
 from backend.core.exceptions import LLMError
 from backend.core.logging import get_logger
 from backend.core.tracing import get_tracer
-from backend.schemas.intent import RecommendationIssue, StyleIntent
+from backend.schemas.intent import StyleIntent
+from backend.schemas.taxonomy import OCCASION_DESCRIPTIONS
 
 logger = get_logger(__name__)
 
@@ -40,7 +38,8 @@ _INTENT_SYSTEM_PROMPT = (
     "Map any style words to the catalog taxonomy: formal, casual, smart_casual, streetwear, "
     "sporty, bohemian, minimalist. Budgets are in INR unless another currency is explicit "
     "(convert roughly if needed). Only extract what the user actually said — never invent "
-    "constraints they did not express."
+    "constraints they did not express. occasion_type is one of these, or null if none is named:\n"
+    + "\n".join(f"- {occ.value}: {desc}" for occ, desc in OCCASION_DESCRIPTIONS.items())
 )
 
 _EXPLANATION_SYSTEM_PROMPT = (
@@ -49,59 +48,28 @@ _EXPLANATION_SYSTEM_PROMPT = (
     "colors, or styles that are not in the facts. No markdown, under 80 words."
 )
 
-_CRITIC_SYSTEM_PROMPT = (
-    "You are a strict fashion-recommendation reviewer. Given the detected garment, the user's "
-    "intent, and the proposed outfits, report concrete problems only — occasion mismatches and "
-    "explanation claims unsupported by the outfit facts. If there are no real problems, return "
-    "an empty issue list. Never invent problems."
-)
-
-
-class _CritiqueResult(BaseModel):
-    """Container so the critic's structured output is a single object."""
-
-    issues: list[RecommendationIssue] = Field(default_factory=list)
-
 
 class LLMService:
-    """Async DeepSeek wrapper for intent extraction, grounded explanations, and critique.
-
-    Falls back gracefully if the API key is missing, the service is
-    unavailable, or rate limits are hit.
-    """
+    """Async text-model client for intent extraction and grounded explanations."""
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._enabled = bool(self._settings.deepseek_api_key)
-        self._structured: ChatOpenAI | None = None
+        self._enabled = bool(self._settings.vlm_api_key)
 
         if self._enabled:
             self._client = AsyncOpenAI(
-                api_key=self._settings.deepseek_api_key,
-                base_url=self._settings.deepseek_base_url,
+                api_key=self._settings.vlm_api_key,
+                base_url=self._settings.vlm_base_url,
             )
         else:
             self._client = None  # type: ignore[assignment]
-            logger.warning("llm_disabled", reason="DEEPSEEK_API_KEY not set")
+            logger.warning("llm_disabled", reason="VLM_API_KEY not set")
 
     @property
     def enabled(self) -> bool:
         return self._enabled
 
     # ── Low-level helpers ─────────────────────────────────────────────
-
-    def _structured_model(self) -> ChatOpenAI:
-        """Lazily build the LangChain client used for structured outputs."""
-        if self._structured is None:
-            self._structured = ChatOpenAI(
-                api_key=SecretStr(self._settings.deepseek_api_key),
-                base_url=self._settings.deepseek_base_url,
-                model=self._settings.deepseek_model,
-                temperature=0.0,  # deterministic extraction/critique
-                timeout=30,
-                max_retries=1,
-            )
-        return self._structured
 
     async def _chat(self, system_prompt: str, user_prompt: str) -> str:
         """Send a chat completion request and return the text response."""
@@ -110,12 +78,12 @@ class LLMService:
 
         try:
             with get_tracer().generation(
-                "deepseek.chat",
-                model=self._settings.deepseek_model,
+                "llm.chat",
+                model=self._settings.text_model,
                 input=user_prompt,
             ) as generation:
                 response = await self._client.chat.completions.create(
-                    model=self._settings.deepseek_model,
+                    model=self._settings.text_model,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
@@ -135,40 +103,75 @@ class LLMService:
                 return content
         except (APIConnectionError, RateLimitError, APIError) as exc:
             logger.warning("llm_api_error", error=str(exc))
-            raise LLMError(f"DeepSeek API error: {exc}") from exc
+            raise LLMError(f"LLM API error: {exc}") from exc
 
     async def _structured_call[T: BaseModel](self, schema: type[T], system_prompt: str, user_prompt: str) -> T:
-        """Run a structured-output call (function calling under the hood)."""
+        """One ``json_schema`` response, validated against ``schema`` in code.
+
+        Not a forced tool call: Gemini on OpenRouter ended about 1 in 12 forced
+        calls with ``finish_reason=error`` and no call, while ``json_schema``
+        parsed 20 of 20 (2026-11-15). ``strict`` is off because Pydantic schemas
+        with defaults are not strict-mode schemas; validation happens here.
+        """
         if not self._enabled:
             raise LLMError("LLM service is disabled (no API key)")
 
-        # DeepSeek supports tool/function calling but not OpenAI's strict
-        # json_schema response format, so pin the method explicitly.
-        model = self._structured_model().with_structured_output(schema, method="function_calling")
+        name = schema.__name__
         try:
             with get_tracer().generation(
-                f"deepseek.structured.{schema.__name__}",
-                model=self._settings.deepseek_model,
+                f"llm.structured.{name}",
+                model=self._settings.text_model,
                 input=user_prompt,
             ) as generation:
-                result = await model.ainvoke(
-                    [
+                response = await self._client.chat.completions.create(
+                    model=self._settings.text_model,
+                    messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
-                    ]
+                    ],
+                    response_format={
+                        "type": "json_schema",
+                        "json_schema": {"name": name, "strict": False, "schema": schema.model_json_schema()},
+                    },
+                    # Only providers that honour response_format.
+                    extra_body={"provider": {"require_parameters": True}},
+                    temperature=0.0,  # deterministic extraction
+                    timeout=30,
                 )
-                if not isinstance(result, schema):
-                    raise LLMError(f"Structured output returned {type(result).__name__}, expected {schema.__name__}")
+                content = response.choices[0].message.content if response.choices else None
+                if not content:
+                    raise LLMError(f"Structured call returned no {name}")
+                result = schema.model_validate_json(content)
                 if generation is not None:
                     generation.update(output=result.model_dump(mode="json"))
                 return result
-        except LLMError:
-            raise
-        except Exception as exc:  # langchain wraps provider errors variously
-            logger.warning("llm_structured_error", schema=schema.__name__, error=str(exc))
-            raise LLMError(f"DeepSeek structured call failed: {exc}") from exc
+        except (APIConnectionError, RateLimitError, APIError) as exc:
+            logger.warning("llm_structured_error", schema=name, error=str(exc))
+            raise LLMError(f"LLM structured call failed: {exc}") from exc
+        except ValidationError as exc:
+            logger.warning("llm_structured_invalid", schema=name, error=str(exc))
+            raise LLMError(f"LLM returned an invalid {name}: {exc}") from exc
 
     # ── Public API ────────────────────────────────────────────────────
+
+    async def complete_with_tools(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]], *, max_tokens: int
+    ) -> ChatCompletion:
+        """One chat step on ``agent_model`` with tools offered (``tool_choice`` auto); the agent drives the loop."""
+        if not self._enabled:
+            raise LLMError("LLM service is disabled (no API key)")
+        try:
+            return await self._client.chat.completions.create(
+                model=self._settings.agent_model,
+                messages=cast(Any, messages),
+                tools=cast(Any, tools),
+                temperature=0.0,
+                max_tokens=max_tokens,
+                timeout=30,
+            )
+        except (APIConnectionError, RateLimitError, APIError) as exc:
+            logger.warning("llm_tools_error", error=str(exc))
+            raise LLMError(f"LLM tool call failed: {exc}") from exc
 
     async def structured[T: BaseModel](self, schema: type[T], *, system_prompt: str, user_prompt: str) -> T:
         """Public structured-output call for callers with their own prompts (e.g. eval judges)."""
@@ -194,21 +197,3 @@ class LLMService:
         occasion_line = f"\nThe user is dressing for: {occasion}." if occasion else ""
         prompt = f"Facts about this outfit:\n{lines}{occasion_line}\n\nWrite the explanation."
         return await self._chat(_EXPLANATION_SYSTEM_PROMPT, prompt)
-
-    async def critique_recommendations(
-        self,
-        *,
-        detected: str,
-        intent_summary: str,
-        outfits: list[dict[str, Any]],
-    ) -> list[RecommendationIssue]:
-        """Structured critic pass over the assembled recommendations."""
-        payload = json.dumps(outfits, ensure_ascii=False)
-        prompt = (
-            f"Detected garment: {detected}\n"
-            f"User intent: {intent_summary or 'none stated'}\n"
-            f"Proposed outfits (JSON): {payload}\n\n"
-            "Report issues with codes 'occasion_mismatch' or 'unsupported_claim' only."
-        )
-        result = await self._structured_call(_CritiqueResult, _CRITIC_SYSTEM_PROMPT, prompt)
-        return result.issues

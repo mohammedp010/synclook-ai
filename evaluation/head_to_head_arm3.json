@@ -1,0 +1,67 @@
+{
+  "about": "Arm 3 (the real chatbot app, typed in by the owner; answers verbatim in head_to_head_manual.md), transcribed BY HAND into the shape the scorer reads. App/model: not stated by owner; date 2026-11-15. Products came as shopping cards with titles and prices but no URLs, so links are 'not given'. Rules used: one outfit per complete look the answer offers; where it says 'X, or swap for Y' or 'X or Y', X is taken; layers marked optional are left out; accessories are kept when listed as part of the look. Piece names are copied as written; head_to_head.py matches them to closet labels in code. The 'says the closet cannot' check runs in code on the full answer text from the .md file.",
+  "answers": {
+    "office_rain": {"outfits": [
+      ["Blue business shirt", "Brown trousers", "Black blazer", "Black boots", "Navy watch", "Brown leather belt"]
+    ]},
+    "interview_cold": {"outfits": [
+      ["Blue business shirt", "Khaki sweater", "Brown trousers", "Brown coat", "Brown penny loafers", "Brown leather belt", "Navy watch"],
+      ["Blue business shirt", "Black blazer", "brown coat", "Beige trousers", "Black loafers", "navy watch"]
+    ]},
+    "beach": {"note": "The answer is a packing list plus three 'Easy Daytime Outfit Combos'; the combos are scored.", "outfits": [
+      ["White graphic t-shirt", "orange shorts", "brown sandals"],
+      ["Charcoal polo", "orange shorts", "brown sandals", "navy watch"],
+      ["Charcoal t-shirt", "orange shorts", "white sneakers"]
+    ]},
+    "drinks_cold_rain": {"outfits": [
+      ["Blue business shirt", "Khaki sweater", "Charcoal jeans", "Brown coat", "Black boots", "Navy watch", "Brown leather belt"]
+    ]},
+    "date_no_jeans": {"outfits": [
+      ["Blue business shirt", "Beige trousers", "Brown penny loafers", "Brown leather belt", "Navy watch"],
+      ["Charcoal polo", "Khaki chinos", "White sneakers", "Brown leather belt", "Navy watch"],
+      ["Olive dress", "Black loafers", "Navy watch"],
+      ["Cream blouse", "Green skirt", "Brown penny loafers", "Navy watch"]
+    ]},
+    "pool_swim": {"outfits": [
+      ["White graphic t-shirt", "Orange shorts", "Brown sandals", "Navy watch"]
+    ]},
+    "black_tie": {"note": "The burgundy lehenga is named alone as 'a statement piece', with no shoes: not counted as an outfit.", "outfits": [
+      ["Black blazer", "Blue business shirt", "Charcoal jeans", "Black loafers", "Navy watch"],
+      ["Olive dress", "black blazer", "black loafers", "navy watch"]
+    ]},
+    "gap_any": {"suggestion": ["shirt", "white"], "products": [
+      {"title": "Peter England Men Formal Shirt", "price": 1039},
+      {"title": "KINGDOM OF White Men Pure Cotton Regular Fit White Formal Shirt At NykaaMan", "price": 1575},
+      {"title": "Rare Rabbit Men Regular Fit Plain Shirt", "price": 2099},
+      {"title": "The Million Bucks White Dress Shirt for Men Cutaway Collar", "price": 1845},
+      {"title": "White Formal Shirt for Men", "price": 3999},
+      {"title": "Mens Hawes & Curtis White Solid Shirt", "price": 5776},
+      {"title": "U.S. Polo Assn Men. Solid Casual", "price": 2494},
+      {"title": "Thursday Men's Shirts Everyday Button-Down Shirt", "price": 9754.98}
+    ]},
+    "gap_under_2000": {"suggestion": ["shirt", "white"], "products": [
+      {"title": "KINGDOM OF White Men Pure Cotton Regular Fit White Formal Shirt At NykaaMan", "price": 1575},
+      {"title": "Peter England Men Sleeves Formal Shirt", "price": 1039},
+      {"title": "Wrinkle Free White Shirt – Soft Touch", "price": 1145},
+      {"title": "AviEvie's Men’s Classic White Slim Fit Dress Shirt", "price": 999},
+      {"title": "Marks & Spencer Ultimate Pure Cotton Oxford Shirt", "price": 1999},
+      {"title": "Buy Men Soft Oxford Shirt White|U.S. Polo Assn. India 46 / White / White", "price": 1536},
+      {"title": "U.S. Polo Assn Men. Cotton Dobby Shirt", "price": 1564},
+      {"title": "YOUSTA Men Regular Fit Oxford Shirt with Patch Pocket For Men", "price": 799}
+    ]},
+    "white_sneakers": {"products": [
+      {"title": "WROGN Men White Sazerac Mistedge Sneakers At NykaaMan", "price": 2199},
+      {"title": "WROGN Men White Bramble Ecru Sneakers At NykaaMan", "price": 1799},
+      {"title": "WROGN Men Casual Sneakers", "price": 1999},
+      {"title": "Men's White Leather Casual Shoes 8", "price": 1875},
+      {"title": "Thomas Crick Thomas Crick Men Theo Genuine Leather Lace-up Sneakers For Men", "price": 3332},
+      {"title": "Ajile White Solid Men Sneakers", "price": 1699},
+      {"title": "Mens adidas trainers court Shoes", "price": 2519},
+      {"title": "Puma Court Shatter Low Sneakers For Men", "price": 2574},
+      {"title": "Campus BRISK Men Sneakers", "price": 1309},
+      {"title": "Campus Men RUSTLE Sneakers", "price": 1729},
+      {"title": "Campus DRIPP Men Sneakers", "price": 1559},
+      {"title": "HIROLAS Men Lace-Up Canvas Sneakers For Men", "price": 1008}
+    ]}
+  }
+}

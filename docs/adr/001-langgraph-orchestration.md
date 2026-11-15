@@ -35,3 +35,16 @@ Key implementation choices:
 - Cost: a framework dependency and its learning curve. Accepted deliberately — partly as a
   learning objective, partly because the cycle/checkpoint features have a real roadmap
   (conversation memory, resumable runs).
+
+## Addendum (October 2026): workflow, not multi-agent
+
+Adopting a graph did not make the stages agents. Every conditional edge is a pure function of
+the typed state, and no node chooses the next step; most nodes are deterministic rule code, and
+the LLMs sit inside individual steps (intent extraction, perception, explanation wording, an
+optional critic). In the terms of Anthropic's *Building Effective Agents*, this is a workflow
+with model-powered steps, and that is what the project now calls it.
+
+The `*Agent` class names stay, because renaming them would churn every test without changing
+behaviour; the README reads them as graph nodes. An autonomous loop, in which an LLM picks tools
+until it is done, belongs only where the next step depends on open-ended language, such as
+refining a look in conversation.

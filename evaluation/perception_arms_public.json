@@ -1,0 +1,48 @@
+{
+  "split": "public",
+  "vision_model": "google/gemini-2.5-flash-lite",
+  "arms": {
+    "a": {
+      "n_photos": 191,
+      "n_garment_photos": 139,
+      "false_rejects": 2,
+      "non_garments_caught": 0.7692,
+      "type_fine": 0.6906,
+      "type_coarse": 0.7554,
+      "type_category": 0.8633,
+      "color_fine": 0.5396,
+      "color_coarse": 0.6547,
+      "pattern_fine": 0.7338,
+      "pattern_coarse": 0.7482,
+      "formality_exact": 0.6763,
+      "formality_mae": 0.3285,
+      "occasion_precision": 0.6058,
+      "occasion_recall": 0.7493,
+      "occasion_f1": 0.67,
+      "cost_per_1000_usd": 0.0979,
+      "median_latency_ms": 1974
+    },
+    "b": {
+      "n_photos": 191,
+      "n_garment_photos": 139,
+      "false_rejects": 0,
+      "non_garments_caught": 0.8269,
+      "type_fine": 0.7122,
+      "type_coarse": 0.7986,
+      "type_category": 0.8633,
+      "color_fine": 0.518,
+      "color_coarse": 0.6403,
+      "pattern_fine": 0.6115,
+      "pattern_coarse": 0.6259,
+      "formality_exact": 0.7266,
+      "formality_mae": 0.2878,
+      "occasion_precision": 0.3498,
+      "occasion_recall": 0.9404,
+      "occasion_f1": 0.5099,
+      "cost_per_1000_usd": 0.2193,
+      "median_latency_ms": 2325
+    }
+  },
+  "errors": [],
+  "decision": "B (beats A by +0.050 on formality_exact)"
+}

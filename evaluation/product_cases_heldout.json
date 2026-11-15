@@ -1,0 +1,1115 @@
+[
+ {
+  "name": "menswear_black_belt_formal",
+  "desired": {
+   "item_type": "belt",
+   "color": "black",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Tommy Hilfiger Men's Leather Formal Belt (Black, 34)",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Black Leather Belt Bag Waist Pouch for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's Black Skinny Belt with Gold Buckle",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Classic Black Genuine Leather Belt for Men, Pin Buckle",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Brown Leather Formal Belt for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Belt Buckle Replacement Silver Black for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_silver_watch_smart_casual",
+  "desired": {
+   "item_type": "watch",
+   "color": "silver",
+   "style": "smart_casual",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Titan Neo Analog Silver Dial Men's Watch with Stainless Steel Strap",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Watch Strap 22mm Stainless Steel Silver Bracelet Replacement",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Fossil Men's Minimalist Silver-Tone Stainless Steel Watch",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Fastrack Women's Analog Silver Watch",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Casio Men's Gold-Tone Analog Watch",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Silver Watch Box Organizer 6 Slots",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_maroon_tie_formal",
+  "desired": {
+   "item_type": "tie",
+   "color": "maroon",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Men's Maroon Woven Microfiber Formal Tie",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Peter England Maroon Tie for Men (Free Size)",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Tie Clip Silver for Men Formal",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Blue Formal Tie for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Maroon Bow Tie Pre-tied Adjustable",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Maroon Formal Shirt for Men Slim Fit",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "unisex_black_sunglasses_casual",
+  "desired": {
+   "item_type": "sunglasses",
+   "color": "black",
+   "style": "casual",
+   "shopping_intent": "unisex"
+  },
+  "products": [
+   {
+    "title": "Ray-Ban Unisex Wayfarer Sunglasses Black Frame (RB2140)",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Fastrack UV Protected Square Black Sunglasses for Men and Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Sunglasses Case Hard Shell Black",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Kids Black Sunglasses Cartoon UV400",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Reading Glasses +1.5 Blue Light Blocking",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Aviator Sunglasses Polarized",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   }
+  ]
+ },
+ {
+  "name": "womenswear_beige_tote_bag_casual",
+  "desired": {
+   "item_type": "tote_bag",
+   "color": "beige",
+   "style": "casual",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Women's Beige Canvas Tote Bag with Zip",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Beige Laptop Backpack for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Caprese Women's Tote Handbag (Beige)",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Beige Tote Bag Organizer Insert Felt",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's Black Leather Tote Bag",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Beige Crossbody Sling Bag for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "unisex_grey_scarf_casual",
+  "desired": {
+   "item_type": "scarf",
+   "color": "grey",
+   "style": "casual",
+   "shopping_intent": "unisex"
+  },
+  "products": [
+   {
+    "title": "Unisex Grey Wool Blend Winter Scarf Muffler",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Kids Grey Knitted Scarf and Beanie Set",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Grey Checked Woollen Scarf for Men and Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Grey Knitted Beanie Cap Winter",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Blue Wool Scarf Unisex",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Light Grey Cashmere Feel Scarf",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   }
+  ]
+ },
+ {
+  "name": "womenswear_gold_necklace_festive",
+  "desired": {
+   "item_type": "necklace",
+   "color": "gold",
+   "style": "festive",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Gold Plated Kundan Necklace Set for Women with Earrings",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Women's 18K Gold Plated Layered Chain Necklace",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Gold Plated Jhumka Earrings for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Silver Oxidised Necklace for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Men's Gold Chain Necklace 22 inch",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Necklace Display Stand Gold Metal Holder",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_silver_earrings_party",
+  "desired": {
+   "item_type": "earrings",
+   "color": "silver",
+   "style": "party",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Sterling Silver Hoop Earrings for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Oxidised Silver Jhumka Earrings",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Silver Ear Cuff for Men Non-Piercing",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Silver Earring Backs Stoppers 100 pcs",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Gold Hoop Earrings for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Silver Nose Pin for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "unisex_black_cap_sporty",
+  "desired": {
+   "item_type": "cap",
+   "color": "black",
+   "style": "sporty",
+   "shopping_intent": "unisex"
+  },
+  "products": [
+   {
+    "title": "Puma Unisex Black Baseball Cap Adjustable",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Nike Dri-FIT Black Running Cap",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Black Beanie Knitted Winter Cap",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Bucket Hat Unisex",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Cap Organizer Rack Black Holds 7 Caps",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Kids Black Baseball Cap Cartoon",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_brown_briefcase_formal",
+  "desired": {
+   "item_type": "briefcase",
+   "color": "brown",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Men's Brown Leather Briefcase 15.6 inch Laptop Office Bag",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Hidesign Brown Leather Briefcase for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Brown Leather Wallet for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Leather Briefcase Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Brown Leather Laptop Backpack Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's Brown Office Laptop Tote",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_red_dupatta_festive",
+  "desired": {
+   "item_type": "dupatta",
+   "color": "red",
+   "style": "festive",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Women's Red Banarasi Silk Dupatta with Zari Border",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Red Chiffon Dupatta for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Red Cotton Kurta with Dupatta Set",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Maroon Velvet Dupatta",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Red Silk Saree with Blouse Piece",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Dupatta Pin Brooch Gold",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_gold_clutch_party",
+  "desired": {
+   "item_type": "clutch",
+   "color": "gold",
+   "style": "party",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Gold Sequin Party Clutch for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Women's Metallic Gold Box Clutch Evening Bag",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Gold Clutch Pencil Mechanical 2mm",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Silver Embellished Clutch",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Gold Sling Bag Women Party",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Men's Gold Cufflinks",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_white_pocket_square_formal",
+  "desired": {
+   "item_type": "pocket_square",
+   "color": "white",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Men's White Cotton Pocket Square",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Plain White Silk Pocket Square Handkerchief for Blazer",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "White Formal Shirt with Chest Pocket for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Polka Dot Pocket Square",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Off-White Linen Pocket Square",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's White Handkerchief Lace Pack of 6",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "unisex_navy_backpack_casual",
+  "desired": {
+   "item_type": "backpack",
+   "color": "navy",
+   "style": "casual",
+   "shopping_intent": "unisex"
+  },
+  "products": [
+   {
+    "title": "Wildcraft Unisex Navy Blue Laptop Backpack 30L",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Skybags Navy Casual Backpack",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Navy Blue Rain Cover for Backpack",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Kids Navy School Bag Cartoon",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Laptop Backpack 35L",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Blue Duffle Gym Bag",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_white_shirt_formal",
+  "desired": {
+   "item_type": "shirt",
+   "color": "white",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Van Heusen Men's Slim Fit Formal Shirt (VHSF1234_White_40)",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Arrow Men's Solid White Cotton Shirt Regular Collar",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Men's White Kurta Cotton Straight",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's White Oversized Shirt Dress",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Off White Linen Shirt Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Boys White School Uniform Shirt",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_black_jeans_casual",
+  "desired": {
+   "item_type": "jeans",
+   "color": "black",
+   "style": "casual",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Levi's Women's 711 Skinny Black Jeans",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Women's High Rise Black Denim Jeans Stretchable",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Black Denim Jacket for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Men's Black Slim Fit Jeans",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's Black Denim Shorts",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Grey Wash Jeans Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_navy_dress_party",
+  "desired": {
+   "item_type": "dress",
+   "color": "navy",
+   "style": "party",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Women's Navy Blue Bodycon Party Dress",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Navy Fit and Flare Midi Dress",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Navy Blue Dress Material Unstitched Salwar Suit",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Shirt for Women Formal",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Girls Navy Party Frock",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Black Bodycon Dress Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_green_sweater_casual",
+  "desired": {
+   "item_type": "sweater",
+   "color": "green",
+   "style": "casual",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Men's Green Cable Knit Pullover Sweater",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Bottle Green Round Neck Sweater for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Olive Green Sweater Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Men's Green Hoodie Fleece",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Green Sweater Vest Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Sweater Shaver Lint Remover Green",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "unisex_white_shoes_casual",
+  "desired": {
+   "item_type": "shoes",
+   "color": "white",
+   "style": "casual",
+   "shopping_intent": "unisex"
+  },
+  "products": [
+   {
+    "title": "Adidas Unisex White Running Sneakers",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Bata White Canvas Shoes for Men and Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "White Shoe Cleaner Kit Foam",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "White Sports Socks Pack of 3",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Cream Leather Sneakers Unisex",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Kids White Velcro School Shoes",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "menswear_navy_blazer_formal",
+  "desired": {
+   "item_type": "blazer",
+   "color": "navy",
+   "style": "formal",
+   "shopping_intent": "menswear"
+  },
+  "products": [
+   {
+    "title": "Raymond Men's Navy Blue Slim Fit Blazer",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Men's Single Breasted Navy Blazer Formal",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Navy Blue Three Piece Suit for Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Blazer Buttons Replacement Set Gold",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Women's Navy Blazer Office",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Navy Nehru Jacket Men",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ },
+ {
+  "name": "womenswear_beige_trousers_smart_casual",
+  "desired": {
+   "item_type": "trousers",
+   "color": "beige",
+   "style": "smart_casual",
+   "shopping_intent": "womenswear"
+  },
+  "products": [
+   {
+    "title": "Women's Beige High Waist Formal Trousers",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Beige Straight Fit Trousers for Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": true
+   },
+   {
+    "title": "Beige Chinos Women Slim",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Beige Leggings Women Cotton",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Beige Midi Skirt Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   },
+   {
+    "title": "Cream Wide Leg Trousers Women",
+    "price": "₹999",
+    "source": "Amazon.in",
+    "thumbnail": "t.jpg",
+    "relevant": false
+   }
+  ]
+ }
+]

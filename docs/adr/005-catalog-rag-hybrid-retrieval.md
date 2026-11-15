@@ -1,7 +1,11 @@
 # ADR 005: Catalog RAG — pgvector, hybrid retrieval, cross-encoder rerank
 
-**Status**: accepted (September 2026). Supersedes [ADR 002](002-no-vector-database-yet.md)
-for the product catalog only; the wardrobe still scans in Python, for the reasons ADR 002 gives.
+**Status**: superseded (November 2026). The closet-first redesign removed the catalogue,
+pgvector, the BGE embeddings and the cross-encoder: the seed catalogue held 5 products, so live
+search filled nearly every slot anyway. The record below is kept as it was written.
+
+~~accepted (September 2026). Supersedes [ADR 002](002-no-vector-database-yet.md)
+for the product catalog only; the wardrobe still scans in Python, for the reasons ADR 002 gives.~~
 
 ## Context
 

@@ -1,32 +1,22 @@
 """Pydantic schemas for API requests and responses."""
 
-from datetime import UTC, datetime
-from enum import Enum
-from uuid import UUID, uuid4
+import datetime as dt
+from typing import Literal
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from backend.schemas.clothing import ClothingAttributes
-
-
-class FeedbackType(str, Enum):
-    LIKE = "like"
-    DISLIKE = "dislike"
-
-
-class Gender(str, Enum):
-    """Legacy search preference kept for backwards-compatible API clients."""
-
-    MALE = "male"
-    FEMALE = "female"
-    UNISEX = "unisex"
-
-
-class ShoppingIntent(str, Enum):
-    MENSWEAR = "menswear"
-    WOMENSWEAR = "womenswear"
-    UNISEX = "unisex"
-    ALL = "all"
+from backend.schemas.clothing import Color
+from backend.schemas.perception import GarmentTags, Warmth
+from backend.schemas.taxonomy import (
+    GARMENT_TYPE_OPTIONS,
+    ColorName,
+    Formality,
+    GarmentCategory,
+    GarmentType,
+    Occasion,
+    PatternName,
+)
 
 
 class ProductLink(BaseModel):
@@ -41,7 +31,7 @@ class ProductLink(BaseModel):
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Product relevance score for the recommendation item",
+        description="Product gate relevance: the product of the three Jev probabilities",
     )
     match_reason: str = Field(
         default="",
@@ -49,81 +39,8 @@ class ProductLink(BaseModel):
     )
     match_evidence: list[str] = Field(
         default_factory=list,
-        description=(
-            "Retrieval facts behind this product, one per line — which arm found it "
-            "(keyword/vector), at what rank, and its rerank score. The same grounding "
-            "contract as Recommendation.evidence, applied to shopping."
-        ),
+        description="The product gate's facts behind this product, one per line (Jev item, colour, buyer)",
     )
-
-
-class RecommendationItem(BaseModel):
-    """A single outfit recommendation."""
-
-    item_type: str
-    color: str
-    style: str
-    reason: str = Field(description="Why this item was recommended")
-    owned: bool = Field(
-        default=False,
-        description="True when the user already owns this item; shopping is skipped for it",
-    )
-    wardrobe_item_id: str | None = Field(
-        default=None,
-        description="ID of the matching wardrobe item when this piece can be worn from the user's closet",
-    )
-    products: list[ProductLink] = Field(
-        default_factory=list,
-        description="Matching products from online stores",
-    )
-
-
-class Recommendation(BaseModel):
-    """Full recommendation output from the Recommendation Agent."""
-
-    id: UUID = Field(default_factory=uuid4)
-    items: list[RecommendationItem]
-    overall_explanation: str = Field(
-        description="Outfit explanation grounded in the rule-engine evidence; LLM-worded when available"
-    )
-    evidence: list[str] = Field(
-        default_factory=list,
-        description="Rule-engine facts this recommendation is grounded in (the explanation may only cite these)",
-    )
-    style_tags: list[str] = Field(default_factory=list)
-    confidence: float = Field(ge=0.0, le=1.0, default=0.8)
-
-
-class AnalysisRequest(BaseModel):
-    """Request schema — metadata only; image sent as multipart."""
-
-    user_id: str | None = None
-
-
-class AnalysisResponse(BaseModel):
-    """Full response for a clothing analysis + recommendation request."""
-
-    request_id: UUID = Field(default_factory=uuid4)
-    detected_attributes: ClothingAttributes
-    recommendations: list[Recommendation]
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-
-
-class FeedbackRequest(BaseModel):
-    """User feedback on a recommendation."""
-
-    request_id: UUID
-    recommendation_id: UUID
-    feedback: FeedbackType
-    user_id: str | None = None
-    comment: str | None = None
-
-
-class FeedbackResponse(BaseModel):
-    """Acknowledgement of stored feedback."""
-
-    status: str = "ok"
-    message: str = "Feedback recorded"
 
 
 class HealthResponse(BaseModel):
@@ -131,3 +48,163 @@ class HealthResponse(BaseModel):
 
     status: str = "healthy"
     version: str
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Closet and outfits (Phase 3)
+# ──────────────────────────────────────────────────────────────────────
+
+
+class ClosetItemOut(GarmentTags):
+    id: UUID
+    image_url: str = Field(description="GET this for the stored 512 px JPEG")
+
+
+class ClosetItemPatch(BaseModel):
+    """A user's correction to one or more tags. Category and colour family follow in code."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    garment_type: str | None = Field(default=None, description="A GarmentType or AccessoryType value, or 'other'")
+    color: ColorName | None = None
+    secondary_color: ColorName | None = None
+    pattern: PatternName | None = None
+    formality: Formality | None = None
+    warmth: Warmth | None = None
+    occasions: list[Occasion] | None = None
+    short_label: str | None = Field(default=None, min_length=1, max_length=60)
+
+    @field_validator("garment_type")
+    @classmethod
+    def _known_type(cls, value: str | None) -> str | None:
+        if value is not None and value not in GARMENT_TYPE_OPTIONS:
+            raise ValueError("unknown garment_type")
+        return value
+
+
+class DemoClosetOut(BaseModel):
+    added: int
+    total: int
+
+
+class McpKeyOut(BaseModel):
+    url: str = Field(description="This closet's private MCP endpoint; add it to Claude or ChatGPT as a connector")
+
+
+class WearRequest(BaseModel):
+    item_ids: list[UUID] = Field(min_length=1, max_length=12, description="Items in this closet, e.g. one outfit")
+    action: Literal["worn", "saved", "skipped"]
+    occasion: Occasion | None = None
+    date: dt.date | None = Field(default=None, description="Day it happened; today when omitted, never in the future")
+
+
+class WearOut(WearRequest):
+    id: UUID
+    date: dt.date
+
+
+class ItemWearOut(BaseModel):
+    id: UUID
+    short_label: str
+    times_worn: int
+    last_worn: dt.date | None
+
+
+class ClosetStatsOut(BaseModel):
+    items: list[ItemWearOut] = Field(description="Every closet item, most worn first")
+    never_worn: list[UUID]
+
+
+class OutfitsRequest(BaseModel):
+    occasion: str = Field(
+        min_length=1,
+        max_length=300,
+        description="An Occasion value (no model call), or free text such as 'dinner with my in-laws' (one call)",
+    )
+    place: str | None = Field(default=None, max_length=120, description="City for the weather, e.g. 'Mumbai'")
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    date: dt.date | None = Field(default=None, description="Day to dress for; today when omitted")
+
+
+class WeatherOut(BaseModel):
+    temperature_c: float
+    band: str
+    rain: bool
+
+
+class OutfitPiece(BaseModel):
+    id: UUID
+    short_label: str
+    garment_type: str
+    category: GarmentCategory
+    image_url: str
+
+
+class OutfitOut(BaseModel):
+    items: list[OutfitPiece]
+    score: float = Field(description="Rule score: the sum of score_parts. A ranking number, not a probability")
+    score_parts: dict[str, float]
+    evidence: list[str] = Field(description="Rule facts; the explanation may only use these")
+    explanation: str
+    explanation_source: Literal["model", "template"]
+
+
+class OutfitsResponse(BaseModel):
+    occasion: Occasion
+    occasion_from_text: bool = Field(description="True when the text model read the occasion from free text")
+    weather: WeatherOut | None
+    outfits: list[OutfitOut]
+    reason: str | None = Field(description="Why there are fewer than 3 outfits")
+    notes: list[str]
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  What one thing should I buy? (Phase 4)
+# ──────────────────────────────────────────────────────────────────────
+
+Buyer = Literal["menswear", "womenswear", "all"]
+
+
+class GapsRequest(BaseModel):
+    buyer: Buyer = Field(default="all", description="menswear leaves out dresses, skirts and blouses")
+
+
+class GapPiece(BaseModel):
+    id: UUID | None = Field(description="None for the item to buy")
+    short_label: str
+    garment_type: str
+    category: GarmentCategory
+    image_url: str | None
+
+
+class GapOut(BaseModel):
+    garment_type: GarmentType
+    color: Color = Field(description="Colour family; send both to POST /shop/search")
+    label: str
+    new_outfits: int = Field(description="Valid outfits it adds across all occasions, each counted once")
+    new_outfits_by_occasion: dict[Occasion, int]
+    occasions_unlocked: list[Occasion] = Field(description="Occasions the closet had no outfit for")
+    example_occasion: Occasion
+    example: list[GapPiece]
+    example_evidence: list[str]
+
+
+class GapsResponse(BaseModel):
+    gaps: list[GapOut]
+    candidates_checked: int
+    reason: str | None = Field(description="Why there are fewer than 3 suggestions")
+
+
+class ShopSearchRequest(BaseModel):
+    garment_type: GarmentType
+    color: Color
+    buyer: Buyer = "all"
+    max_price: int | None = Field(default=None, ge=1, description="Budget in ₹; listings over it are dropped")
+
+
+class ShopSearchResponse(BaseModel):
+    query: str
+    checked: int = Field(description="Listings the product gate looked at")
+    products: list[ProductLink] = Field(description="Only listings that passed the gate, best first")
+    note: str | None = Field(description="Why there are no products, when there are none")

@@ -1,0 +1,26 @@
+# Render Blueprint: the backend demo on a free web service (512 MB, sleeps after 15 min idle, ~1 min to wake).
+# The database is Neon's free Postgres (Render's free Postgres is deleted after 30 days), so there is no
+# database block here. Secrets are `sync: false`: Render asks for them once, in its dashboard, at creation.
+services:
+  - type: web
+    name: synclook-api
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: demo-deploy
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "[]" # no browser frontend yet; /docs is same-origin and MCP hosts call server to server
+      - key: DATABASE_URL
+        sync: false # Neon's direct (not pooled) connection string, pasted as Neon shows it
+      - key: VLM_API_KEY
+        sync: false # OpenRouter
+      - key: JEV_API_KEY
+        sync: false
+      - key: SERPAPI_API_KEY
+        sync: false

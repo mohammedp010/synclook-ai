@@ -17,7 +17,7 @@ async def test_product_relevance_reports_metrics() -> None:
 
 
 async def test_keyword_baseline_meets_floor() -> None:
-    """Regression guard on the legacy matcher (the embedding reranker's baseline)."""
+    """Regression guard on the keyword matcher, the product gate's baseline."""
     report = await evaluate_product_relevance(matcher="keyword")
     summary = report["summary"]
     assert summary["f1"] >= 0.8

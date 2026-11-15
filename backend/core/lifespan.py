@@ -2,13 +2,11 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger, setup_logging
-from backend.db.redis import close_redis
 
 logger = get_logger(__name__)
 
@@ -27,24 +25,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         environment=settings.environment,
     )
 
-    # Ensure upload directory exists
-    upload_dir = Path(settings.upload_dir)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
-    yield
+    async with app.state.mcp_sessions.run():  # a mounted app's own lifespan never runs, so the host enters it
+        yield
 
     # --- Shutdown ---
-    # Close memory service if created via DI
-    from backend.core.dependencies import get_memory_service
-
-    try:
-        memory = get_memory_service()
-        await memory.close()
-    except Exception:
-        pass
-
     from backend.core.tracing import get_tracer
 
     get_tracer().shutdown()
-    await close_redis()
     logger.info("app_stopped")

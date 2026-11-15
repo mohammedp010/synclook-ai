@@ -1,0 +1,127 @@
+{
+  "variants": {
+    "full": {
+      "items": 27,
+      "requests": 56,
+      "empty_rate": 0.036,
+      "full_rate": 0.839
+    },
+    "half": {
+      "items": 13,
+      "requests": 56,
+      "empty_rate": 0.143,
+      "full_rate": 0.446
+    },
+    "no_footwear": {
+      "items": 22,
+      "requests": 56,
+      "empty_rate": 0.946,
+      "full_rate": 0.0
+    },
+    "no_outerwear": {
+      "items": 24,
+      "requests": 56,
+      "empty_rate": 0.036,
+      "full_rate": 0.839
+    },
+    "no_accessories": {
+      "items": 25,
+      "requests": 56,
+      "empty_rate": 0.036,
+      "full_rate": 0.839
+    }
+  },
+  "violations": [],
+  "per_occasion_full_closet": {
+    "business_formal": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "business_casual": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "smart_casual": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "everyday_casual": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "party_night_out": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "cocktail_semi_formal": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "wedding_guest": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "festive_ethnic": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "beach_resort": {
+      "none": 3,
+      "cold_rain": 2,
+      "mild": 3,
+      "hot": 3
+    },
+    "gym_athleisure": {
+      "none": 1,
+      "cold_rain": 0,
+      "mild": 1,
+      "hot": 1
+    },
+    "travel_commute": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "date_night": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "interview": {
+      "none": 3,
+      "cold_rain": 3,
+      "mild": 3,
+      "hot": 3
+    },
+    "loungewear": {
+      "none": 1,
+      "cold_rain": 0,
+      "mild": 1,
+      "hot": 1
+    }
+  },
+  "summary": {
+    "requests": 280,
+    "violations": 0,
+    "ms_mean": 2.54,
+    "ms_p95": 14.71
+  }
+}

@@ -6,7 +6,11 @@ No LLM calls — purely rule-based.
 
 from __future__ import annotations
 
-from backend.schemas.clothing import ClothingType, Pattern, Style
+from dataclasses import dataclass, field
+
+from backend.schemas.clothing import ClothingType, Pattern
+from backend.schemas.taxonomy import AccessoryType, Formality, Occasion
+from backend.tools.accessory_rules import OCCASION_FORMALITY
 
 # ──────────────────────────────────────────────────────────────────────
 #  Item-pairing table
@@ -57,24 +61,34 @@ ITEM_PAIRINGS: dict[ClothingType, list[ClothingType]] = {
     ClothingType.JACKET: [
         ClothingType.TSHIRT,
         ClothingType.SHIRT,
+        ClothingType.SWEATER,
+        ClothingType.HOODIE,
         ClothingType.JEANS,
         ClothingType.CHINOS,
+        ClothingType.TROUSERS,
         ClothingType.SHOES,
         ClothingType.ACCESSORY,
     ],
+    # A blazer over a tee, or with jeans, is the taxonomy's own example of smart casual.
     ClothingType.BLAZER: [
         ClothingType.SHIRT,
         ClothingType.BLOUSE,
+        ClothingType.TSHIRT,
         ClothingType.TROUSERS,
         ClothingType.CHINOS,
+        ClothingType.JEANS,
         ClothingType.SHOES,
         ClothingType.ACCESSORY,
     ],
     ClothingType.COAT: [
         ClothingType.SWEATER,
         ClothingType.SHIRT,
+        ClothingType.TSHIRT,
+        ClothingType.BLOUSE,
         ClothingType.TROUSERS,
         ClothingType.JEANS,
+        ClothingType.CHINOS,
+        ClothingType.SKIRT,
         ClothingType.SHOES,
         ClothingType.ACCESSORY,
     ],
@@ -182,13 +196,6 @@ INVALID_ITEMS_BY_SHOPPING_INTENT: dict[str, set[ClothingType]] = {
 }
 
 # Backward-compatible alias for older tests/imports and API terminology.
-INVALID_ITEMS_BY_GENDER: dict[str, set[ClothingType]] = {
-    "male": INVALID_ITEMS_BY_SHOPPING_INTENT["menswear"],
-    "female": INVALID_ITEMS_BY_SHOPPING_INTENT["womenswear"],
-    "unisex": INVALID_ITEMS_BY_SHOPPING_INTENT["unisex"],
-    **INVALID_ITEMS_BY_SHOPPING_INTENT,
-}
-
 OUTFIT_STRUCTURE: dict[str, dict[str, list[str]]] = {
     "bottomwear": {
         "required": ["topwear"],
@@ -226,17 +233,6 @@ ITEM_SPECIFIC_OUTFIT_STRUCTURE: dict[ClothingType, dict[str, list[str]]] = {
     },
 }
 
-SAFE_DEFAULTS_BY_CATEGORY: dict[str, list[ClothingType]] = {
-    "topwear": [ClothingType.SHIRT, ClothingType.TSHIRT, ClothingType.SWEATER],
-    # SHORTS trails the list so only styles that exclude the others (sporty)
-    # fall through to it; without it sporty had no style-legal bottomwear and
-    # the required-category rescue reached for jeans.
-    "bottomwear": [ClothingType.TROUSERS, ClothingType.JEANS, ClothingType.CHINOS, ClothingType.SHORTS],
-    "outerwear": [ClothingType.JACKET, ClothingType.BLAZER],
-    "footwear": [ClothingType.SHOES],
-    "accessory": [ClothingType.ACCESSORY],
-}
-
 
 def normalize_shopping_intent(value: str | None) -> str:
     """Normalize legacy gender values and new shopping-intent values."""
@@ -262,113 +258,104 @@ def _to_clothing_type(item_type: ClothingType | str) -> ClothingType | None:
     for ct in ClothingType:
         if ct.value == normalized:
             return ct
+    # A concrete accessory ("belt", "pocket_square") is an accessory-slot item:
+    # same category, same style and shopping-intent policy as the old bucket.
+    if normalized.replace("-", "_") in AccessoryType._value2member_map_:
+        return ClothingType.ACCESSORY
     return None
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  Style compatibility table
+#  Occasion rules (Phase 5)
 # ──────────────────────────────────────────────────────────────────────
+#
+# When the user names an occasion, it — not the garment's style — decides what
+# the look may contain. These replace the old route, which mapped the occasion
+# onto a ``Style`` and let STYLE_ALLOWED_ITEMS decide: that put chinos at a
+# board meeting (``formal`` allows chinos), dress trousers at the gym
+# (``sporty`` allows trousers), and had no style at all for a beach or Diwali.
 
-STYLE_COMPATIBILITY: dict[Style, list[Style]] = {
-    Style.FORMAL: [Style.FORMAL, Style.SMART_CASUAL],
-    Style.CASUAL: [Style.CASUAL, Style.STREETWEAR, Style.SMART_CASUAL, Style.SPORTY],
-    Style.SMART_CASUAL: [Style.SMART_CASUAL, Style.FORMAL, Style.CASUAL],
-    Style.STREETWEAR: [Style.STREETWEAR, Style.CASUAL, Style.SPORTY],
-    Style.SPORTY: [Style.SPORTY, Style.CASUAL, Style.STREETWEAR],
-    Style.BOHEMIAN: [Style.BOHEMIAN, Style.CASUAL],
-    Style.MINIMALIST: [Style.MINIMALIST, Style.SMART_CASUAL, Style.FORMAL, Style.CASUAL],
-    Style.OTHER: [s for s in Style],
+_T = ClothingType
+_O = Occasion
+_F = Formality
+
+_TAILORED = frozenset({_T.SHIRT, _T.BLOUSE, _T.BLAZER, _T.COAT, _T.TROUSERS, _T.SUIT, _T.SKIRT, _T.DRESS})
+_SMART = _TAILORED | {_T.TSHIRT, _T.SWEATER, _T.JACKET, _T.CHINOS, _T.JEANS}
+_EVERYDAY = frozenset(
+    {
+        _T.TSHIRT,
+        _T.SHIRT,
+        _T.BLOUSE,
+        _T.SWEATER,
+        _T.HOODIE,
+        _T.JACKET,
+        _T.COAT,
+        _T.TROUSERS,
+        _T.JEANS,
+        _T.CHINOS,
+        _T.SHORTS,
+        _T.SKIRT,
+        _T.DRESS,
+    }
+)
+_DRESSED = frozenset({_T.SHOES, _T.ACCESSORY})
+
+OCCASION_ALLOWED_ITEMS: dict[Occasion, frozenset[ClothingType]] = {
+    _O.BUSINESS_FORMAL: _TAILORED | _DRESSED,
+    _O.INTERVIEW: _TAILORED | _DRESSED,
+    _O.WEDDING_GUEST: _TAILORED | _DRESSED,
+    _O.COCKTAIL_SEMI_FORMAL: _TAILORED | _DRESSED,
+    # Festive ethnic wear (kurta, sherwani, lehenga) has no live ClothingType,
+    # so the closest the look can get is dressed and tailored — never a tee.
+    _O.FESTIVE_ETHNIC: _TAILORED | _DRESSED,
+    _O.BUSINESS_CASUAL: _TAILORED | {_T.SWEATER, _T.CHINOS} | _DRESSED,
+    _O.SMART_CASUAL: _SMART | _DRESSED,
+    _O.DATE_NIGHT: _SMART | _DRESSED,
+    _O.PARTY_NIGHT_OUT: (_SMART - {_T.COAT, _T.SWEATER}) | _DRESSED,
+    _O.EVERYDAY_CASUAL: _EVERYDAY | _DRESSED,
+    _O.TRAVEL_COMMUTE: (_EVERYDAY - {_T.SHORTS}) | _DRESSED,
+    _O.BEACH_RESORT: frozenset({_T.TSHIRT, _T.SHIRT, _T.BLOUSE, _T.SHORTS, _T.CHINOS, _T.SKIRT, _T.DRESS}) | _DRESSED,
+    _O.GYM_ATHLEISURE: frozenset({_T.TSHIRT, _T.HOODIE, _T.JACKET, _T.SHORTS}) | _DRESSED,
+    # At home: no outerwear, no shoes. Accessories are already out of band
+    # (``OCCASION_FORMALITY`` puts lounge below every accessory's range).
+    _O.LOUNGEWEAR: frozenset({_T.TSHIRT, _T.HOODIE, _T.SWEATER, _T.SHORTS, _T.ACCESSORY}),
 }
 
-STYLE_ALLOWED_ITEMS: dict[Style, set[ClothingType]] = {
-    # Streetwear focuses on relaxed tops/bottoms; avoid formal outerwear.
-    Style.STREETWEAR: {
-        ClothingType.TSHIRT,
-        ClothingType.HOODIE,
-        ClothingType.SHIRT,
-        ClothingType.SWEATER,
-        ClothingType.JACKET,
-        ClothingType.JEANS,
-        ClothingType.CHINOS,
-        ClothingType.TROUSERS,
-        ClothingType.SHORTS,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    # Formal looks should stay sharp and structured.
-    Style.FORMAL: {
-        ClothingType.SHIRT,
-        ClothingType.BLAZER,
-        ClothingType.COAT,
-        ClothingType.TROUSERS,
-        ClothingType.CHINOS,
-        ClothingType.SUIT,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    # Casual remains flexible but excludes highly occasion-specific pieces.
-    Style.CASUAL: {
-        ClothingType.TSHIRT,
-        ClothingType.SHIRT,
-        ClothingType.HOODIE,
-        ClothingType.SWEATER,
-        ClothingType.JACKET,
-        ClothingType.JEANS,
-        ClothingType.CHINOS,
-        ClothingType.TROUSERS,
-        ClothingType.SHORTS,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    Style.SMART_CASUAL: {
-        ClothingType.SHIRT,
-        ClothingType.TSHIRT,
-        ClothingType.SWEATER,
-        ClothingType.BLAZER,
-        ClothingType.JACKET,
-        ClothingType.TROUSERS,
-        ClothingType.CHINOS,
-        ClothingType.JEANS,
-        ClothingType.COAT,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    Style.SPORTY: {
-        ClothingType.TSHIRT,
-        ClothingType.HOODIE,
-        ClothingType.SHORTS,
-        ClothingType.JACKET,
-        ClothingType.TROUSERS,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    Style.BOHEMIAN: {
-        ClothingType.SHIRT,
-        ClothingType.BLOUSE,
-        ClothingType.SWEATER,
-        ClothingType.JACKET,
-        ClothingType.TROUSERS,
-        ClothingType.JEANS,
-        ClothingType.SKIRT,
-        ClothingType.DRESS,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    Style.MINIMALIST: {
-        ClothingType.SHIRT,
-        ClothingType.TSHIRT,
-        ClothingType.SWEATER,
-        ClothingType.JACKET,
-        ClothingType.BLAZER,
-        ClothingType.COAT,
-        ClothingType.TROUSERS,
-        ClothingType.CHINOS,
-        ClothingType.JEANS,
-        ClothingType.SHOES,
-        ClothingType.ACCESSORY,
-    },
-    Style.OTHER: set(ClothingType),
+
+@dataclass(frozen=True)
+class ColorPolicy:
+    palettes: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    """Category → the only colours allowed there, in preference order."""
+    avoid: frozenset[str] = frozenset()
+    avoid_categories: frozenset[str] = frozenset()
+    """Where ``avoid`` applies. Empty means everywhere."""
+
+
+_DARK_NEUTRALS = ("navy", "grey", "black", "beige")
+_FORMAL_COLORS = ColorPolicy(
+    palettes={
+        "footwear": ("black", "brown"),
+        "bottomwear": _DARK_NEUTRALS,
+        "outerwear": (*_DARK_NEUTRALS, "brown"),
+    }
+)
+# Guests do not wear white to a wedding (and in India white is a mourning
+# colour). Shirts are exempt: a white shirt under a jacket is the norm, and the
+# judge's objection was an all-white *look*, not a white collar.
+_CELEBRATION_AVOID = frozenset({"white", "cream"})
+_NOT_TOPWEAR = frozenset({"bottomwear", "outerwear", "footwear"})
+
+FORMALITY_COLOR_POLICY: dict[Formality, ColorPolicy] = {
+    _F.BUSINESS_FORMAL: _FORMAL_COLORS,
+    _F.BLACK_TIE: _FORMAL_COLORS,
 }
+
+OCCASION_COLOR_POLICY: dict[Occasion, ColorPolicy] = {
+    _O.WEDDING_GUEST: ColorPolicy(_FORMAL_COLORS.palettes, _CELEBRATION_AVOID, _NOT_TOPWEAR),
+    _O.FESTIVE_ETHNIC: ColorPolicy(avoid=_CELEBRATION_AVOID, avoid_categories=_NOT_TOPWEAR),
+}
+"""Overrides FORMALITY_COLOR_POLICY for the occasion. Keyed on (occasion ×
+formality): the register sets the palette, the occasion adds its conventions."""
 
 # ──────────────────────────────────────────────────────────────────────
 #  Pattern pairing table
@@ -436,93 +423,32 @@ class StyleRuleEngineTool:
         invalid = INVALID_ITEMS_BY_SHOPPING_INTENT.get(shopping_intent, set())
         return ct not in invalid
 
-    def get_safe_fallback_items(
-        self,
-        base_item_type: ClothingType | str,
-        *,
-        detected_style: Style,
-        gender: str = "unisex",
-    ) -> list[ClothingType]:
-        """Structure-aware conservative fallback for low-confidence detections.
+    # ── Occasion (Phase 5) ───────────────────────────────────────────
 
-        Covers every category the base item's outfit structure needs, so the
-        recommendation stage can always assemble a complete look. Prefers
-        style-compatible items, but relaxes the style filter rather than leave
-        a *required* category empty — coverage beats style adherence here.
-        """
-        structure = self.get_outfit_structure(base_item_type)
-        required = list(structure.get("required", []))
-        items: list[ClothingType] = []
-
-        for category in [*required, *structure.get("optional", [])]:
-            candidates = [
-                item
-                for item in SAFE_DEFAULTS_BY_CATEGORY.get(category, [])
-                if self.is_item_allowed_for_gender(item, gender)
-            ]
-            style_ok = [item for item in candidates if self.is_item_allowed_for_style(detected_style, item)]
-            picked = style_ok or (candidates if category in required else [])
-            items.extend(picked[:2])
-
-        seen: set[ClothingType] = set()
-        deduped: list[ClothingType] = []
-        for item in items:
-            if item not in seen:
-                seen.add(item)
-                deduped.append(item)
-        return deduped
-
-    # ── Style compatibility ──────────────────────────────────────────
-
-    def get_compatible_styles(self, style: Style) -> list[Style]:
-        """Return styles compatible with *style*, ordered best-first."""
-        return list(STYLE_COMPATIBILITY.get(style, [style]))
-
-    def is_style_compatible(self, style_a: Style, style_b: Style) -> bool:
-        """Check whether two styles can be mixed in one outfit."""
-        compatible = STYLE_COMPATIBILITY.get(style_a, [])
-        return style_b in compatible
-
-    def is_item_allowed_for_style(self, detected_style: Style, item_type: ClothingType | str) -> bool:
-        """Check if an item type is valid under the detected style context."""
+    def is_item_allowed_for_occasion(self, occasion: Occasion, item_type: ClothingType | str) -> bool:
         ct = _to_clothing_type(item_type)
-        if ct is None:
-            return False
-        allowed = STYLE_ALLOWED_ITEMS.get(detected_style, set(ClothingType))
-        return ct in allowed
+        return ct is not None and ct in OCCASION_ALLOWED_ITEMS[occasion]
+
+    def occasion_colors(self, occasion: Occasion, category: str, proposed: list[str]) -> list[str]:
+        """Filter a slot's proposed colours through the occasion's colour policy.
+
+        Keeps the colour rules' order where it can. When nothing proposed
+        survives, the policy's own palette stands in — a formal look gets black
+        shoes rather than no shoes.
+        """
+        policy = OCCASION_COLOR_POLICY.get(occasion) or FORMALITY_COLOR_POLICY.get(OCCASION_FORMALITY[occasion])
+        if policy is None:
+            return proposed
+        avoid = policy.avoid if not policy.avoid_categories or category in policy.avoid_categories else frozenset()
+        palette = policy.palettes.get(category)
+        kept = [c for c in proposed if c not in avoid and (palette is None or c in palette)]
+        if kept:
+            return kept
+        return [c for c in palette if c not in avoid] if palette else proposed
 
     # ── Pattern pairing ──────────────────────────────────────────────
-
-    def get_paired_patterns(self, pattern: Pattern) -> list[Pattern]:
-        """Return patterns that pair well with *pattern*."""
-        return list(PATTERN_PAIRS.get(pattern, [Pattern.SOLID]))
 
     def is_pattern_compatible(self, pattern_a: Pattern, pattern_b: Pattern) -> bool:
         """Check whether two patterns can be mixed in one outfit."""
         pairs = PATTERN_PAIRS.get(pattern_a, [])
         return pattern_b in pairs
-
-    # ── Composite scoring ────────────────────────────────────────────
-
-    def compute_match_score(
-        self,
-        detected_style: Style,
-        suggested_style: Style,
-        detected_pattern: Pattern,
-    ) -> float:
-        """Score 0-1 for how well a suggested item fits the detected garment.
-
-        Considers style compatibility and pattern ease-of-pairing.
-        """
-        score = 0.5  # base
-
-        if suggested_style in STYLE_COMPATIBILITY.get(detected_style, []):
-            score += 0.25
-        if suggested_style == detected_style:
-            score += 0.1
-
-        # Solid patterns pair with everything — bonus
-        if detected_pattern == Pattern.SOLID:
-            score += 0.1
-
-        return min(round(score, 2), 1.0)

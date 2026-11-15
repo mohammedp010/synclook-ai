@@ -1,34 +1,31 @@
-"""LLM-as-judge evaluation: explanation faithfulness and intent adherence.
+"""LLM-as-judge evaluation of ``POST /outfits``: explanation faithfulness and occasion fit.
 
-The deterministic verifier already catches literal violations (garment types
-not in the look). The judge adds semantic checks a regex can't:
+The local check in ``services.outfit_explainer`` already rejects explanations that
+name a garment the outfit lacks. The judge adds what a word list cannot:
 
-- **faithfulness**: does the explanation claim colors, styles, or benefits
-  the rule evidence doesn't support?
-- **intent adherence**: does the outfit plausibly serve the stated occasion?
+- **faithfulness**: does the explanation claim colours, occasions or benefits the
+  rule evidence does not support?
+- **adherence**: do the outfit's items plausibly serve the occasion?
 
-Adherence is judged end-to-end. Each sampled case is given a real free-text
-request ("something for the gym"), which goes through the production
-``IntentAgent`` like any user's would; the judge then scores the resulting
-outfit against the occasion *that parse* produced, not against the request
-text. So a wrong answer implicates the whole chain — extraction, effective
-style, rule engine — which is the chain a user experiences.
+Cases: the demo closet × every ``Occasion`` (no weather) → the engine's outfits →
+the production explainer (the app's text model) → the judge. The judge is a
+**different model** (``--judge-model``, default ``openai/gpt-4o-mini``) so the
+writer does not grade itself. Calibration cases run first; a judge that cannot
+separate them is reported as uncalibrated and its scores withheld.
 
-Calibration cases (hand-crafted good/bad pairs) run first — a judge that
-can't separate them is reported as uncalibrated and its scores discarded.
+Every model reply is cached on disk (``evaluation/.cache/llm_judge/``), so a re-run
+costs nothing. First run: about 14 explainer + 87 judge calls, roughly $0.02::
 
-Requires DEEPSEEK_API_KEY; costs a few paise per case. Run on demand::
-
-    poetry run python evaluation/llm_judge.py --sample 8
+    poetry run python evaluation/llm_judge.py
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import sys
-from itertools import cycle
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -38,13 +35,35 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.agents.base import AgentContext  # noqa: E402
-from backend.agents.intent_agent import IntentAgent, intent_from_context  # noqa: E402
-from backend.agents.recommendation_agent import RecommendationAgent  # noqa: E402
-from backend.agents.styling_agent import StylingAgent  # noqa: E402
-from backend.schemas.clothing import ClothingAttributes, ClothingType, Color, Pattern, Style  # noqa: E402
+from backend.core.config import Settings, get_settings  # noqa: E402
+from backend.engine.outfits import build_outfits  # noqa: E402
+from backend.schemas.taxonomy import Occasion  # noqa: E402
 from backend.services.llm import LLMService  # noqa: E402
-from evaluation.recording import record_if_asked  # noqa: E402
+from backend.services.outfit_explainer import PROMPT_VERSION, explain, unowned_garments  # noqa: E402
+from evaluation.outfit_engine import demo_closet  # noqa: E402
+
+CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "llm_judge"
+REPORT = Path(__file__).resolve().parent / "llm_judge_outfits.json"
+DEFAULT_JUDGE = "openai/gpt-4o-mini"
+
+
+class CachedLLM(LLMService):
+    """``structured`` replies cached on disk by model, schema and prompts."""
+
+    calls = 0
+
+    async def structured[T: BaseModel](self, schema: type[T], *, system_prompt: str, user_prompt: str) -> T:
+        model = self._settings.text_model
+        key = hashlib.sha256("\x00".join((model, schema.__name__, system_prompt, user_prompt)).encode()).hexdigest()
+        path = CACHE_DIR / f"{key}.json"
+        if path.exists():
+            return schema.model_validate_json(path.read_text())
+        CachedLLM.calls += 1
+        result = await super().structured(schema, system_prompt=system_prompt, user_prompt=user_prompt)
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path.write_text(result.model_dump_json())
+        return result
+
 
 _JUDGE_SYSTEM_PROMPT = (
     "You are an exacting evaluator of fashion-recommendation explanations. "
@@ -69,24 +88,6 @@ class FaithfulnessVerdict(BaseModel):
 class AdherenceVerdict(BaseModel):
     adherent: bool = Field(description="True when the outfit plausibly serves the stated occasion")
     reasoning: str = Field(description="One-sentence justification")
-
-
-# One request per occasion the intent taxonomy recognises, worded the way a
-# user would word it. They are rotated across the sample so adherence is
-# measured over the range of occasions rather than over one of them: judging
-# every look — gym clothes included — against a single "office day" scores
-# correct outfits as failures and pins the metric to the mix of styles in the
-# case file.
-JUDGED_REQUESTS = [
-    "something to wear to the office",
-    "I have a job interview",
-    "going to a wedding",
-    "dinner date tonight",
-    "a party this weekend",
-    "heading to the gym",
-    "travelling all day tomorrow",
-    "a casual outing with friends",
-]
 
 
 # ── Calibration: the judge must separate these before its scores count ──
@@ -153,78 +154,50 @@ async def run_calibration(llm: LLMService) -> dict[str, Any]:
     return {"passed": correct == len(CALIBRATION_CASES), "correct": correct, "details": details}
 
 
-async def run_judged_eval(sample: int) -> dict[str, Any]:
-    llm = LLMService()
-    if not llm.enabled:
-        raise SystemExit("DEEPSEEK_API_KEY required for LLM-as-judge evaluation")
+async def run_judged_eval(judge_model: str) -> dict[str, Any]:
+    settings: Settings = get_settings()
+    if not settings.vlm_api_key:
+        raise SystemExit("VLM_API_KEY (OpenRouter) required for LLM-as-judge evaluation")
+    if judge_model == settings.text_model:
+        raise SystemExit("the judge must not be the model that writes the explanations")
+    writer = CachedLLM(settings)
+    judge = CachedLLM(settings.model_copy(update={"text_model": judge_model}))
 
-    calibration = await run_calibration(llm)
+    calibration = await run_calibration(judge)
     if not calibration["passed"]:
         return {"calibration": calibration, "error": "judge failed calibration; scores withheld"}
 
-    cases = json.loads((Path(__file__).resolve().parent / "test_cases.json").read_text())
-    sampled = [c for c in cases if c.get("kind") == "generated"][:: max(1, len(cases) // sample)][:sample]
-
-    intent_agent = IntentAgent(llm_service=llm)
-    styling = StylingAgent()
-    recommendation = RecommendationAgent(llm_service=llm)
-
-    faithful = unfaithful = adherent = nonadherent = 0
+    closet = demo_closet()
+    faithful = adherent = judged = from_model = 0
     violations: list[dict[str, Any]] = []
     misses: list[dict[str, Any]] = []
-    for case, request in zip(sampled, cycle(JUDGED_REQUESTS)):
-        i = case["input"]
-        ctx = AgentContext(image_bytes=b"eval", gender=i["gender"], shopping_intent=i["gender"])
-        ctx.clothing_attributes = ClothingAttributes(
-            clothing_type=ClothingType(i["clothing_type"]),
-            primary_color=Color(i["primary_color"]),
-            pattern=Pattern(i.get("pattern", "solid")),
-            style=Style(i["style"]),
-            confidence=float(i.get("confidence", 0.8)),
-        )
-        ctx.metadata["user_intent_text"] = request
-        ctx = await intent_agent.run(ctx)
-        ctx = await styling.run(ctx)
-        ctx = await recommendation.run(ctx)
+    for occasion in Occasion:
+        outfits = build_outfits(closet, occasion).outfits
+        for outfit, explanation in zip(outfits, await explain(writer, outfits, occasion), strict=True):
+            judged += 1
+            from_model += explanation.source == "model"
+            assert not unowned_garments(explanation.text, outfit)  # the local check held
+            verdict = await judge_faithfulness(judge, list(outfit.evidence), explanation.text)
+            faithful += verdict.faithful
+            if not verdict.faithful:
+                violations.append({"occasion": occasion.value, "text": explanation.text, "why": verdict.violations})
+            items = [i.short_label for i in outfit.items]
+            adherence = await judge_adherence(judge, occasion.value.replace("_", " "), items)
+            adherent += adherence.adherent
+            if not adherence.adherent:
+                misses.append({"occasion": occasion.value, "items": items, "reasoning": adherence.reasoning})
 
-        # Judge against what the pipeline understood, not what we asked for: an
-        # outfit is only unfair to score if the occasion it was built for
-        # differs from the occasion it is scored against.
-        intent = intent_from_context(ctx)
-        occasion = (intent.occasion if intent else None) or request
-
-        for rec in ctx.recommendations[:1]:  # judge the primary look per case
-            verdict = await judge_faithfulness(llm, rec.evidence, rec.overall_explanation)
-            if verdict.faithful:
-                faithful += 1
-            else:
-                unfaithful += 1
-                violations.append({"case": case["name"], "violations": verdict.violations})
-
-            items = [f"{item.color} {item.item_type}" for item in rec.items]
-            adherence = await judge_adherence(llm, occasion, items)
-            if adherence.adherent:
-                adherent += 1
-            else:
-                nonadherent += 1
-                misses.append(
-                    {
-                        "case": case["name"],
-                        "request": request,
-                        "occasion": occasion,
-                        "effective_style": ctx.metadata.get("effective_style"),
-                        "items": items,
-                        "reasoning": adherence.reasoning,
-                    }
-                )
-
-    judged = max(faithful + unfaithful, 1)
     return {
+        "writer_model": settings.text_model,
+        "judge_model": judge_model,
+        "prompt_version": PROMPT_VERSION,
         "calibration": calibration,
         "summary": {
-            "cases_judged": judged,
-            "explanation_faithfulness_rate": round(faithful / judged, 4),
-            "intent_adherence_rate": round(adherent / max(adherent + nonadherent, 1), 4),
+            "outfits_judged": judged,
+            "model_written_rate": round(from_model / max(judged, 1), 4),
+            "explanation_faithfulness_rate": round(faithful / max(judged, 1), 4),
+            "occasion_adherence_rate": round(adherent / max(judged, 1), 4),
+            "paid_calls_this_run": CachedLLM.calls,
         },
         "violations": violations,
         "adherence_misses": misses,
@@ -235,21 +208,16 @@ async def main() -> None:
     from backend.core.logging import setup_logging
 
     setup_logging("ERROR")
-    parser = argparse.ArgumentParser(description="LLM-as-judge evaluation")
-    parser.add_argument("--sample", type=int, default=8, help="number of eval cases to judge")
-    parser.add_argument("--record", action="store_true", help="persist the run to PostgreSQL")
+    parser = argparse.ArgumentParser(description="LLM-as-judge evaluation of POST /outfits")
+    parser.add_argument("--judge-model", default=DEFAULT_JUDGE, help="OpenRouter model id; not the writer model")
     args = parser.parse_args()
 
-    report = await run_judged_eval(args.sample)
+    report = await run_judged_eval(args.judge_model)
     print(json.dumps(report, indent=2))
-
-    # An uncalibrated judge reports no summary at all, and recording a run with
-    # no numbers would put a gap in the trend that looks like a regression.
-    summary = report.get("summary")
-    if summary is None:
-        print("warning: judge failed calibration; nothing recorded", file=sys.stderr)
-        return
-    await record_if_asked(args.record, "llm_judge", num_cases=summary["cases_judged"], metrics=summary)
+    if report.get("summary") is None:
+        print("warning: judge failed calibration; no summary", file=sys.stderr)
+    else:
+        REPORT.write_text(json.dumps(report, indent=2) + "\n")
 
 
 if __name__ == "__main__":

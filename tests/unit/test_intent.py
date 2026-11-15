@@ -1,19 +1,10 @@
-"""Tests for StyleIntent schema, heuristic parsing, and IntentAgent."""
+"""Tests for the StyleIntent schema (the request parser's output)."""
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
-
-from backend.agents.base import AgentContext
-from backend.agents.intent_agent import (
-    IntentAgent,
-    heuristic_intent,
-    intent_from_context,
-    style_lean_for_occasion,
-)
-from backend.core.exceptions import LLMError
 from backend.schemas.clothing import Style
-from backend.schemas.intent import RecommendationIssue, StyleIntent
+from backend.schemas.intent import StyleIntent
+from backend.schemas.taxonomy import Occasion
 
 
 class TestStyleIntentNormalization:
@@ -34,125 +25,13 @@ class TestStyleIntentNormalization:
     def test_is_empty(self) -> None:
         assert StyleIntent().is_empty
         assert not StyleIntent(occasion="wedding").is_empty
+        assert not StyleIntent(occasion_type=Occasion.WEDDING_GUEST).is_empty
 
+    def test_typed_occasion_is_in_the_extraction_schema(self) -> None:
+        # One call fills the words and the type.
+        assert "occasion_type" in StyleIntent.model_json_schema()["properties"]
+        assert StyleIntent(occasion_type=Occasion.BEACH_RESORT).normalized().occasion_type is Occasion.BEACH_RESORT
 
-class TestHeuristicIntent:
-    def test_budget_extraction(self) -> None:
-        intent = heuristic_intent("Style this for a dinner under ₹5,000")
-        assert intent.budget_total_inr == 5000.0
-        assert intent.occasion == "dinner"
-
-    def test_climate_and_occasion(self) -> None:
-        intent = heuristic_intent("something for a rainy office day")
-        assert intent.climate == "rainy"
-        assert intent.occasion == "office"
-        assert Style.SMART_CASUAL in intent.preferred_styles
-
-    def test_explicit_style_mention_wins(self) -> None:
-        intent = heuristic_intent("make this more streetwear for a party")
-        assert intent.preferred_styles[0] == Style.STREETWEAR
-
-    def test_no_shopping_phrase(self) -> None:
-        intent = heuristic_intent("suggest outfits, no shopping links please")
-        assert intent.wants_shopping is False
-
-    def test_plain_text_yields_empty_intent(self) -> None:
-        assert heuristic_intent("what do you think?").is_empty
-
-
-class TestIntentAgent:
-    async def test_no_text_sets_none(self) -> None:
-        ctx = AgentContext(image_bytes=b"x")
-        ctx = await IntentAgent(llm_service=None).run(ctx)
-        assert ctx.metadata["intent"] is None
-        assert intent_from_context(ctx) is None
-
-    async def test_heuristic_fallback_without_llm(self) -> None:
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "office look under 3000"
-        ctx = await IntentAgent(llm_service=None).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert intent.budget_total_inr == 3000.0
-        assert ctx.metadata["intent_source"] == "heuristic"
-
-    async def test_llm_path_used_when_enabled(self) -> None:
-        llm = AsyncMock()
-        llm.enabled = True
-        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="wedding", preferred_styles=[Style.FORMAL]))
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "what should I wear to a wedding?"
-        ctx = await IntentAgent(llm_service=llm).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert intent.occasion == "wedding"
-        assert ctx.metadata["intent_source"] == "llm"
-
-    async def test_llm_failure_falls_back_to_heuristic(self) -> None:
-        llm = AsyncMock()
-        llm.enabled = True
-        llm.extract_intent = AsyncMock(side_effect=LLMError("down"))
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "gym outfit"
-        ctx = await IntentAgent(llm_service=llm).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert Style.SPORTY in intent.preferred_styles
-        assert ctx.metadata["intent_source"] == "heuristic"
-
-
-class TestOccasionStyleBackfill:
-    """The occasion implies a style; the rules supply it when the model does not."""
-
-    def test_known_occasions_map_to_their_style(self) -> None:
-        assert style_lean_for_occasion("wedding") is Style.FORMAL
-        assert style_lean_for_occasion("heading to the gym") is Style.SPORTY
-
-    def test_unknown_occasion_maps_to_nothing(self) -> None:
-        assert style_lean_for_occasion("volcano expedition") is None
-
-    async def test_style_is_backfilled_when_extraction_omits_it(self) -> None:
-        # Observed live: the LLM returns the occasion but an empty style list,
-        # and styling then falls back to the detected garment's own style — so a
-        # wedding request produced a smart-casual look with jeans.
-        llm = AsyncMock()
-        llm.enabled = True
-        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="wedding"))
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "going to a wedding"
-        ctx = await IntentAgent(llm_service=llm).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert intent.preferred_styles == [Style.FORMAL]
-
-    async def test_extracted_style_is_not_overridden(self) -> None:
-        # "A casual wedding" is a thing; the model saw the request, the table
-        # only saw one word of it.
-        llm = AsyncMock()
-        llm.enabled = True
-        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="wedding", preferred_styles=[Style.CASUAL]))
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "a very casual wedding"
-        ctx = await IntentAgent(llm_service=llm).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert intent.preferred_styles == [Style.CASUAL]
-
-    async def test_unmapped_occasion_leaves_styles_empty(self) -> None:
-        llm = AsyncMock()
-        llm.enabled = True
-        llm.extract_intent = AsyncMock(return_value=StyleIntent(occasion="volcano expedition"))
-        ctx = AgentContext(image_bytes=b"x")
-        ctx.metadata["user_intent_text"] = "volcano expedition"
-        ctx = await IntentAgent(llm_service=llm).run(ctx)
-        intent = intent_from_context(ctx)
-        assert intent is not None
-        assert intent.preferred_styles == []
-
-
-class TestRecommendationIssue:
-    def test_fixable_codes(self) -> None:
-        fixable = RecommendationIssue(recommendation_index=0, code="forbidden_item", detail="x", item_type="skirt")
-        not_fixable = RecommendationIssue(recommendation_index=0, code="budget_exceeded", detail="x")
-        assert fixable.fixable
-        assert not not_fixable.fixable
+    def test_an_invented_occasion_becomes_none_not_an_error(self) -> None:
+        assert StyleIntent.model_validate({"occasion_type": "volcano_party"}).occasion_type is None
+        assert StyleIntent.model_validate({"occasion_type": "wedding_guest"}).occasion_type is Occasion.WEDDING_GUEST

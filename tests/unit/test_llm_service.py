@@ -1,6 +1,7 @@
 """Unit tests for LLMService."""
 
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -10,7 +11,7 @@ from backend.services.llm import LLMService
 
 def _disabled_service() -> LLMService:
     settings = MagicMock()
-    settings.deepseek_api_key = ""
+    settings.vlm_api_key = ""
     return LLMService(settings=settings)
 
 
@@ -22,8 +23,8 @@ class TestLLMService:
 
     def test_enabled_with_api_key(self) -> None:
         settings = MagicMock()
-        settings.deepseek_api_key = "sk-test-key"
-        settings.deepseek_base_url = "https://api.deepseek.com"
+        settings.vlm_api_key = "sk-test-key"
+        settings.vlm_base_url = "https://openrouter.ai/api/v1"
         svc = LLMService(settings=settings)
         assert svc.enabled is True
 
@@ -42,10 +43,29 @@ class TestLLMService:
                 occasion="dinner",
             )
 
-    async def test_critique_raises_when_disabled(self) -> None:
-        with pytest.raises(LLMError):
-            await _disabled_service().critique_recommendations(
-                detected="navy shirt",
-                intent_summary="office party",
-                outfits=[{"items": ["trousers"]}],
-            )
+    async def test_structured_parses_the_json_schema_reply(self) -> None:
+        svc = _service_with_reply('{"budget_total_inr": 5000, "climate": "rainy"}')
+        intent = await svc.extract_intent("rainy dinner under 5000")
+        assert intent.budget_total_inr == 5000
+
+    async def test_structured_rejects_a_reply_that_breaks_the_schema(self) -> None:
+        with pytest.raises(LLMError, match="invalid"):
+            await _service_with_reply('{"budget_total_inr": "lots"}').extract_intent("x")
+
+    async def test_structured_rejects_an_empty_reply(self) -> None:
+        with pytest.raises(LLMError, match="no StyleIntent"):
+            await _service_with_reply(None).extract_intent("x")
+
+
+def _service_with_reply(arguments: str | None) -> LLMService:
+    """An enabled service whose client replies with ``arguments`` as the message content (None: empty)."""
+    settings = MagicMock()
+    settings.vlm_api_key = "sk-test-key"
+    settings.vlm_base_url = "https://openrouter.ai/api/v1"
+    svc = LLMService(settings=settings)
+    message = SimpleNamespace(content=arguments)
+    svc._client = MagicMock()
+    svc._client.chat.completions.create = AsyncMock(
+        return_value=SimpleNamespace(choices=[SimpleNamespace(message=message)])
+    )
+    return svc

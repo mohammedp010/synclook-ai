@@ -9,11 +9,12 @@ the LLM — remains the authority on what an outfit may contain.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend.schemas.clothing import Style
+from backend.schemas.taxonomy import Occasion
 
 # Caps applied during normalization so a runaway extraction can't flood
 # downstream prompts or filters.
@@ -27,6 +28,12 @@ class StyleIntent(BaseModel):
     occasion: str | None = Field(
         default=None,
         description="Event or setting the outfit is for, e.g. 'office party', 'rainy dinner', 'wedding'.",
+    )
+    # The rules key on this, not on the words above. The extraction call fills
+    # both; an occasion outside the taxonomy becomes None in code, not an error.
+    occasion_type: Occasion | None = Field(
+        default=None,
+        description="The one listed occasion the request names, or null if it names none of them.",
     )
     budget_total_inr: float | None = Field(
         default=None,
@@ -57,6 +64,11 @@ class StyleIntent(BaseModel):
         description="False if the user explicitly does not want product links.",
     )
 
+    @field_validator("occasion_type", mode="before")
+    @classmethod
+    def _known_occasion(cls, value: Any) -> Any:
+        return value if value is None or isinstance(value, Occasion) or value in Occasion._value2member_map_ else None
+
     def normalized(self) -> StyleIntent:
         """Deterministic validation: clamp, dedupe, and truncate LLM output."""
 
@@ -76,6 +88,7 @@ class StyleIntent(BaseModel):
 
         return StyleIntent(
             occasion=(self.occasion or "").strip()[:_MAX_TEXT_LEN] or None,
+            occasion_type=self.occasion_type,
             budget_total_inr=budget,
             climate=(self.climate or "").strip().lower()[:_MAX_TEXT_LEN] or None,
             dress_code=(self.dress_code or "").strip()[:_MAX_TEXT_LEN] or None,
@@ -90,6 +103,7 @@ class StyleIntent(BaseModel):
         """True when the intent adds no constraints beyond defaults."""
         return (
             self.occasion is None
+            and self.occasion_type is None
             and self.budget_total_inr is None
             and self.climate is None
             and self.dress_code is None
@@ -98,32 +112,3 @@ class StyleIntent(BaseModel):
             and not self.owned_items
             and self.wants_shopping
         )
-
-
-IssueCode = Literal[
-    "incomplete_outfit",
-    "forbidden_item",
-    "duplicate_item",
-    "budget_exceeded",
-    "occasion_mismatch",
-    "unsupported_claim",
-]
-
-# Issues the retry loop can act on by tightening constraints and rebuilding.
-FIXABLE_ISSUE_CODES: set[str] = {"forbidden_item", "duplicate_item", "unsupported_claim"}
-
-
-class RecommendationIssue(BaseModel):
-    """One problem the verifier found in a recommendation."""
-
-    recommendation_index: int = Field(ge=0, description="Index into the recommendations list.")
-    code: IssueCode
-    detail: str = Field(description="Human-readable description of the problem.")
-    item_type: str | None = Field(
-        default=None,
-        description="Offending item type, when the issue concerns a specific item.",
-    )
-
-    @property
-    def fixable(self) -> bool:
-        return self.code in FIXABLE_ISSUE_CODES

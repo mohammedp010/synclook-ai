@@ -9,12 +9,10 @@ jobs:
   backend:
     runs-on: ubuntu-latest
 
-    # The catalog retrieval eval runs against a real database: pgvector's index
-    # behaviour and PostgreSQL full-text ranking are exactly what it measures,
-    # so mocking them would measure nothing.
+    # Plain Postgres: the migrations must apply to a fresh database.
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: postgres:16
         env:
           POSTGRES_USER: synclook
           POSTGRES_PASSWORD: synclook
@@ -48,12 +46,6 @@ jobs:
           restore-keys: |
             poetry-${{ runner.os }}-py312-
 
-      - name: Cache HuggingFace models
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/huggingface
-          key: hf-clip-bge-minilm-v1
-
       - name: Install dependencies
         run: poetry install --no-interaction
 
@@ -69,14 +61,11 @@ jobs:
       - name: Tests
         run: poetry run python -m pytest tests/ -q
 
-      - name: Evaluation gate (recommendation quality)
-        run: poetry run python evaluation/harness.py --check
+      - name: Evaluation gate (outfit engine — 0 rule violations, empty rate, ms per request)
+        run: poetry run python evaluation/outfit_engine.py --check
 
       - name: Evaluation report (product relevance baseline)
         run: poetry run python evaluation/product_relevance.py
 
       - name: Apply migrations
         run: poetry run alembic upgrade head
-
-      - name: Evaluation report (catalog retrieval arms)
-        run: poetry run python evaluation/catalog_retrieval.py

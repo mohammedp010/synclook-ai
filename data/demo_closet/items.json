@@ -1,0 +1,598 @@
+[
+ {
+  "file": "01_t_shirt.jpg",
+  "source": "public/okm_shirt_front_png_ed5ece.jpg",
+  "tags": {
+   "garment_type": "t_shirt",
+   "category": "topwear",
+   "color": "white",
+   "color_family": "white",
+   "color_hex": "#c7cacc",
+   "secondary_color": null,
+   "pattern": "graphic_print",
+   "formality": 1,
+   "warmth": "light",
+   "occasions": [
+    "everyday_casual",
+    "travel_commute",
+    "loungewear"
+   ],
+   "short_label": "white graphic t-shirt",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "02_t_shirt.jpg",
+  "source": "public/gnaegi_unpacked_and_paked_png_c59ae2.jpg",
+  "tags": {
+   "garment_type": "t_shirt",
+   "category": "topwear",
+   "color": "charcoal",
+   "color_family": "grey",
+   "color_hex": "#585656",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "light",
+   "occasions": [
+    "gym_athleisure",
+    "everyday_casual",
+    "loungewear"
+   ],
+   "short_label": "charcoal t-shirt",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "03_polo.jpg",
+  "source": "public/eepisat_black_polo_shirt_png_c0de08.jpg",
+  "tags": {
+   "garment_type": "polo",
+   "category": "topwear",
+   "color": "charcoal",
+   "color_family": "grey",
+   "color_hex": "#444444",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "light",
+   "occasions": [
+    "everyday_casual",
+    "business_casual",
+    "smart_casual"
+   ],
+   "short_label": "charcoal polo",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "04_hoodie.jpg",
+  "source": "public/sudadera_urban_jpg_58db34.jpg",
+  "tags": {
+   "garment_type": "hoodie",
+   "category": "topwear",
+   "color": "navy",
+   "color_family": "navy",
+   "color_hex": "#1b2a4a",
+   "secondary_color": "light_grey",
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "heavy",
+   "occasions": [
+    "everyday_casual",
+    "gym_athleisure",
+    "travel_commute",
+    "loungewear"
+   ],
+   "short_label": "navy hoodie",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "05_shirt.jpg",
+  "source": "public/blue_business_shirt_jpg_5a24c7.jpg",
+  "tags": {
+   "garment_type": "shirt",
+   "category": "topwear",
+   "color": "blue",
+   "color_family": "blue",
+   "color_hex": "#20509b",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "medium",
+   "occasions": [
+    "smart_casual",
+    "business_casual",
+    "everyday_casual"
+   ],
+   "short_label": "blue business shirt",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "06_blouse.jpg",
+  "source": "public/blouse_met_84_173_cp3_jpg_10e489.jpg",
+  "tags": {
+   "garment_type": "blouse",
+   "category": "topwear",
+   "color": "cream",
+   "color_family": "cream",
+   "color_hex": "#f5e9cf",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "light",
+   "occasions": [
+    "smart_casual",
+    "business_casual"
+   ],
+   "short_label": "cream blouse",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "07_sweater.jpg",
+  "source": "public/jersei_coll_alt_jpg_90598b.jpg",
+  "tags": {
+   "garment_type": "sweater",
+   "category": "topwear",
+   "color": "beige",
+   "color_family": "beige",
+   "color_hex": "#877e6d",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "heavy",
+   "occasions": [
+    "smart_casual",
+    "everyday_casual",
+    "business_casual"
+   ],
+   "short_label": "khaki sweater",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "08_kurta.jpg",
+  "source": "public/blue_khadi_kurta_jpg_54df4a.jpg",
+  "tags": {
+   "garment_type": "kurta",
+   "category": "topwear",
+   "color": "denim_blue",
+   "color_family": "blue",
+   "color_hex": "#546678",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "medium",
+   "occasions": [
+    "festive_ethnic",
+    "everyday_casual",
+    "smart_casual",
+    "wedding_guest"
+   ],
+   "short_label": "blue khadi kurta",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "09_jeans.jpg",
+  "source": "public/high_waisted_jeans_1435042736_jpg_60271c.jpg",
+  "tags": {
+   "garment_type": "jeans",
+   "category": "bottomwear",
+   "color": "denim_blue",
+   "color_family": "blue",
+   "color_hex": "#4a6d94",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "travel_commute"
+   ],
+   "short_label": "blue jeans",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "10_jeans.jpg",
+  "source": "public/broek_en_jas_van_uniform_roteb_objectnr_62773_b_c_2_jpg_f8b975.jpg",
+  "tags": {
+   "garment_type": "jeans",
+   "category": "bottomwear",
+   "color": "charcoal",
+   "color_family": "grey",
+   "color_hex": "#55524f",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "party_night_out"
+   ],
+   "short_label": "charcoal jeans",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "11_chinos.jpg",
+  "source": "public/back_side_chino_trousers_with_welt_pocket_jpg_64256c.jpg",
+  "tags": {
+   "garment_type": "chinos",
+   "category": "bottomwear",
+   "color": "khaki",
+   "color_family": "beige",
+   "color_hex": "#a9a28b",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "business_casual",
+    "travel_commute"
+   ],
+   "short_label": "khaki chinos",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "12_trousers.jpg",
+  "source": "public/chino_pants_jpg_6d42a5.jpg",
+  "tags": {
+   "garment_type": "trousers",
+   "category": "bottomwear",
+   "color": "beige",
+   "color_family": "beige",
+   "color_hex": "#adab99",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "medium",
+   "occasions": [
+    "smart_casual",
+    "business_casual"
+   ],
+   "short_label": "beige trousers",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "13_trousers.jpg",
+  "source": "public/trousers_jpg_ce296d.jpg",
+  "tags": {
+   "garment_type": "trousers",
+   "category": "bottomwear",
+   "color": "brown",
+   "color_family": "brown",
+   "color_hex": "#6b4423",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "medium",
+   "occasions": [
+    "smart_casual",
+    "business_casual"
+   ],
+   "short_label": "brown trousers",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "14_shorts.jpg",
+  "source": "public/men_s_shorts_old_bull_lee_orange_jpg_a53a9b.jpg",
+  "tags": {
+   "garment_type": "shorts",
+   "category": "bottomwear",
+   "color": "orange",
+   "color_family": "orange",
+   "color_hex": "#d3804f",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "light",
+   "occasions": [
+    "everyday_casual",
+    "beach_resort",
+    "travel_commute"
+   ],
+   "short_label": "orange shorts",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "15_skirt.jpg",
+  "source": "public/green_poplin_skirt_by_sybil_connolly_full_length_front_jpg_c2d339.jpg",
+  "tags": {
+   "garment_type": "skirt",
+   "category": "bottomwear",
+   "color": "green",
+   "color_family": "green",
+   "color_hex": "#2f7d4f",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "light",
+   "occasions": [
+    "smart_casual",
+    "cocktail_semi_formal",
+    "wedding_guest"
+   ],
+   "short_label": "green skirt",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "16_dress.jpg",
+  "source": "public/dress_met_dt5703_jpg_cc4b01.jpg",
+  "tags": {
+   "garment_type": "dress",
+   "category": "fullbody",
+   "color": "olive",
+   "color_family": "olive",
+   "color_hex": "#6b6b34",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "wedding_guest",
+    "cocktail_semi_formal"
+   ],
+   "short_label": "olive dress",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "17_lehenga.jpg",
+  "source": "public/ethnic_jpg_e934b2.jpg",
+  "tags": {
+   "garment_type": "lehenga",
+   "category": "fullbody",
+   "color": "burgundy",
+   "color_family": "maroon",
+   "color_hex": "#4f1424",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "festive_ethnic",
+    "wedding_guest"
+   ],
+   "short_label": "burgundy lehenga",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "18_blazer.jpg",
+  "source": "public/man_in_black_suit_and_white_shirt_looking_extremely_badass_c_2cfdf5.jpg",
+  "tags": {
+   "garment_type": "blazer",
+   "category": "outerwear",
+   "color": "black",
+   "color_family": "black",
+   "color_hex": "#191816",
+   "secondary_color": "white",
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "business_formal",
+    "interview",
+    "business_casual",
+    "party_night_out",
+    "wedding_guest"
+   ],
+   "short_label": "black blazer",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "19_coat.jpg",
+  "source": "public/coat_of_i_s_konev_central_museum_of_the_great_patriotic_war__cbadcc.jpg",
+  "tags": {
+   "garment_type": "coat",
+   "category": "outerwear",
+   "color": "brown",
+   "color_family": "brown",
+   "color_hex": "#6b4423",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "heavy",
+   "occasions": [
+    "everyday_casual",
+    "travel_commute"
+   ],
+   "short_label": "brown coat",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "20_denim_jacket.jpg",
+  "source": "public/1980s_blue_denim_jacket_finland_01_jpg_07164f.jpg",
+  "tags": {
+   "garment_type": "denim_jacket",
+   "category": "outerwear",
+   "color": "denim_blue",
+   "color_family": "blue",
+   "color_hex": "#4a6d94",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "travel_commute",
+    "smart_casual"
+   ],
+   "short_label": "denim jacket",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "21_sneakers.jpg",
+  "source": "public/converse_jack_purcell_sneakers_on_white_canvas_jpg_e93e78.jpg",
+  "tags": {
+   "garment_type": "sneakers",
+   "category": "footwear",
+   "color": "white",
+   "color_family": "white",
+   "color_hex": "#c6cbd0",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "travel_commute"
+   ],
+   "short_label": "white sneakers",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "22_loafers.jpg",
+  "source": "public/louis_vuitton_mens_loafers_jpg_ffdd56.jpg",
+  "tags": {
+   "garment_type": "loafers",
+   "category": "footwear",
+   "color": "black",
+   "color_family": "black",
+   "color_hex": "#312c36",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "business_formal",
+    "business_casual",
+    "smart_casual",
+    "interview"
+   ],
+   "short_label": "black loafers",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "23_loafers.jpg",
+  "source": "public/a_penny_loafer_jpg_3dc5c1.jpg",
+  "tags": {
+   "garment_type": "loafers",
+   "category": "footwear",
+   "color": "brown",
+   "color_family": "brown",
+   "color_hex": "#693e35",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "business_formal",
+    "business_casual",
+    "smart_casual",
+    "interview"
+   ],
+   "short_label": "brown penny loafers",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "24_boots.jpg",
+  "source": "public/bootsbr_jpg_e0bf5a.jpg",
+  "tags": {
+   "garment_type": "boots",
+   "category": "footwear",
+   "color": "black",
+   "color_family": "black",
+   "color_hex": "#201a1c",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 2,
+   "warmth": "heavy",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "date_night"
+   ],
+   "short_label": "black boots",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "25_sandals.jpg",
+  "source": "public/man_in_sandals_2_jpg_062563.jpg",
+  "tags": {
+   "garment_type": "sandals",
+   "category": "footwear",
+   "color": "brown",
+   "color_family": "brown",
+   "color_hex": "#5c4132",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "light",
+   "occasions": [
+    "everyday_casual",
+    "beach_resort",
+    "loungewear"
+   ],
+   "short_label": "brown sandals",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "26_watch.jpg",
+  "source": "public/corum_coin_watch_p5200012_black_jpg_59b949.jpg",
+  "tags": {
+   "garment_type": "watch",
+   "category": "accessory",
+   "color": "navy",
+   "color_family": "navy",
+   "color_hex": "#33374f",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 3,
+   "warmth": "medium",
+   "occasions": [
+    "business_formal",
+    "business_casual",
+    "smart_casual",
+    "everyday_casual"
+   ],
+   "short_label": "navy watch",
+   "item_count": 1
+  }
+ },
+ {
+  "file": "27_belt.jpg",
+  "source": "public/belt_buckle_blue_jeans_brown_leather_belt_jpg_13da48.jpg",
+  "tags": {
+   "garment_type": "belt",
+   "category": "accessory",
+   "color": "brown",
+   "color_family": "brown",
+   "color_hex": "#553c2e",
+   "secondary_color": null,
+   "pattern": "solid",
+   "formality": 1,
+   "warmth": "medium",
+   "occasions": [
+    "everyday_casual",
+    "smart_casual",
+    "business_casual"
+   ],
+   "short_label": "brown leather belt",
+   "item_count": 1
+  }
+ }
+]

@@ -1,0 +1,38 @@
+{
+  "about": "Phase 8 head-to-head: 30 tasks over the demo closet (data/demo_closet/, items numbered by file prefix 1-27). Fixed before any run; evaluation/head_to_head.py checks this file's SHA-256. 'question' is sent word for word to every arm. The other fields are the scoring truth, written by hand: 'occasion' and 'weather' are what the rules check an outfit against; 'exclude' lists item numbers the answer must not use; 'missing' is a regex for the thing the closet does not have (the answer must say so); 'budget' is in rupees; 'want' is the product asked for; 'manual' marks the 10 tasks for arm 3.",
+  "tasks": [
+    {"id": "office_rain", "kind": "outfit", "question": "Outfit for an office day in the rain, about 18°C.", "occasion": "business_casual", "weather": {"temperature_c": 18, "rain": true}, "manual": true},
+    {"id": "interview_cold", "kind": "outfit", "question": "I have a job interview tomorrow morning. It will be 9°C and dry. What should I wear?", "occasion": "interview", "weather": {"temperature_c": 9, "rain": false}, "manual": true},
+    {"id": "date_night", "kind": "outfit", "question": "Dinner date tonight, a mild evening around 22°C. What do I wear?", "occasion": "date_night", "weather": {"temperature_c": 22, "rain": false}},
+    {"id": "wedding_guest", "kind": "outfit", "question": "I'm a guest at a friend's wedding this weekend, a warm day around 27°C. What should I wear?", "occasion": "wedding_guest", "weather": {"temperature_c": 27, "rain": false}},
+    {"id": "festive", "kind": "outfit", "question": "Diwali get-together with family this evening, around 24°C. I want something festive.", "occasion": "festive_ethnic", "weather": {"temperature_c": 24, "rain": false}},
+    {"id": "gym", "kind": "outfit", "question": "Going to the gym after work, it's 26°C. What do I put on?", "occasion": "gym_athleisure", "weather": {"temperature_c": 26, "rain": false}},
+    {"id": "brunch", "kind": "outfit", "question": "Relaxed Sunday brunch with family, sunny and 25°C. What should I wear?", "occasion": "everyday_casual", "weather": {"temperature_c": 25, "rain": false}},
+    {"id": "train_trip", "kind": "outfit", "question": "Long train journey tomorrow, about 20°C. I want a comfortable outfit.", "occasion": "travel_commute", "weather": {"temperature_c": 20, "rain": false}},
+    {"id": "cocktail", "kind": "outfit", "question": "Cocktail party on a rooftop this evening, 21°C. What should I wear?", "occasion": "cocktail_semi_formal", "weather": {"temperature_c": 21, "rain": false}},
+    {"id": "board_meeting", "kind": "outfit", "question": "Board meeting with clients at a very formal office, 23°C. What do I wear?", "occasion": "business_formal", "weather": {"temperature_c": 23, "rain": false}},
+    {"id": "beach", "kind": "outfit", "question": "Beach resort weekend in Goa, 32°C and sunny. What should I pack to wear by day?", "occasion": "beach_resort", "weather": {"temperature_c": 32, "rain": false}, "manual": true},
+    {"id": "club_night", "kind": "outfit", "question": "Night out at a club with friends, 24°C. What should I wear?", "occasion": "party_night_out", "weather": {"temperature_c": 24, "rain": false}},
+    {"id": "lazy_home", "kind": "outfit", "question": "Lazy day at home, 28°C. What's comfortable?", "occasion": "loungewear", "weather": {"temperature_c": 28, "rain": false}},
+    {"id": "drinks_cold_rain", "kind": "outfit", "question": "Smart casual drinks after work, 7°C and raining. What should I wear?", "occasion": "smart_casual", "weather": {"temperature_c": 7, "rain": true}, "manual": true},
+
+    {"id": "office_no_black_loafers", "kind": "exclude", "question": "Office outfit for a 20°C day, but not the black loafers, they hurt my feet.", "occasion": "business_casual", "weather": {"temperature_c": 20, "rain": false}, "exclude": [22]},
+    {"id": "date_no_jeans", "kind": "exclude", "question": "Date night at 22°C, and I don't want to wear jeans. What should I wear?", "occasion": "date_night", "weather": {"temperature_c": 22, "rain": false}, "exclude": [9, 10], "manual": true},
+    {"id": "interview_no_blazer", "kind": "exclude", "question": "Interview outfit for a 24°C day without the black blazer, it's at the dry cleaner.", "occasion": "interview", "weather": {"temperature_c": 24, "rain": false}, "exclude": [18]},
+    {"id": "casual_rain_no_sneakers", "kind": "exclude", "question": "Everyday casual outfit for a rainy 16°C day, but my white sneakers are in the wash.", "occasion": "everyday_casual", "weather": {"temperature_c": 16, "rain": true}, "exclude": [21]},
+
+    {"id": "pool_swim", "kind": "decline", "question": "Pool party this afternoon and I'm going to swim, 33°C. What swimwear outfit can I put together?", "occasion": "beach_resort", "weather": {"temperature_c": 33, "rain": false}, "missing": "swim", "manual": true},
+    {"id": "black_tie", "kind": "decline", "question": "Black-tie gala tonight, 20°C: I need a tuxedo look with a bow tie. What do I wear?", "occasion": "business_formal", "weather": {"temperature_c": 20, "rain": false}, "missing": "tux|bow[ -]?tie|black[ -]tie", "manual": true},
+    {"id": "ski", "kind": "decline", "question": "Skiing trip in the snow at -5°C. What ski outfit can I make?", "occasion": "travel_commute", "weather": {"temperature_c": -5, "rain": false}, "missing": "ski"},
+    {"id": "heels", "kind": "decline", "question": "Cocktail party at 21°C and I want to wear heels with my dress. Which heels from my closet go best?", "occasion": "cocktail_semi_formal", "weather": {"temperature_c": 21, "rain": false}, "missing": "heel"},
+
+    {"id": "gap_any", "kind": "gap", "question": "What one thing should I buy next to get the most out of my closet?", "manual": true},
+    {"id": "gap_menswear", "kind": "gap", "question": "I only wear menswear. What single item should I buy next?", "buyer": "menswear"},
+    {"id": "gap_under_2000", "kind": "gap_products", "question": "What one thing should I buy under ₹2,000? Show me where to buy it.", "budget": 2000, "manual": true},
+    {"id": "gap_under_1500", "kind": "gap_products", "question": "I have ₹1,500 to spend. What single piece would add the most outfits, and where can I buy it?", "budget": 1500},
+    {"id": "white_sneakers", "kind": "products", "question": "Find me white sneakers under ₹3,000 that I can buy online in India, with links.", "budget": 3000, "want": {"garment_type": "sneakers", "color": "white"}, "manual": true},
+    {"id": "black_boots", "kind": "products", "question": "Show me black boots I can buy under ₹2,500, with links.", "budget": 2500, "want": {"garment_type": "boots", "color": "black"}},
+    {"id": "navy_blazer", "kind": "products", "question": "I want a navy blazer under ₹4,000. Where can I buy one? Links please.", "budget": 4000, "want": {"garment_type": "blazer", "color": "navy"}},
+    {"id": "beige_chinos", "kind": "products", "question": "Beige chinos under ₹1,200, links please.", "budget": 1200, "want": {"garment_type": "chinos", "color": "beige"}}
+  ]
+}

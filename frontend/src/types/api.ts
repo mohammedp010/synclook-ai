@@ -11,6 +11,28 @@ export interface ClothingAttributes {
   style_confidence?: number;
   description: string;
   description_relevant: boolean;
+  /** Fine colour name from the pixels (e.g. "charcoal" where primary_color says "grey"). */
+  color_name?: string | null;
+  /** Measured hex of the garment's primary / secondary colour. */
+  primary_hex?: string | null;
+  secondary_hex?: string | null;
+  /** Fine garment or accessory type, e.g. "denim_jacket", "loafers", "belt". */
+  garment_type?: string | null;
+  garment_type_confidence?: number;
+  /** 0 lounge · 1 casual · 2 smart casual · 3 business · 4 black tie (cascade mode only). */
+  formality?: number | null;
+  /** Visual register, e.g. "minimalist", "ethnic_traditional" (cascade mode only). */
+  aesthetic?: string | null;
+  /** Upload guard: "degrade" means usable but with a caveat in guard_message. */
+  guard?: "pass" | "degrade";
+  guard_reason?: string;
+  guard_message?: string;
+  /** Other items visible in the photo (cascade mode only). */
+  other_garments?: string[];
+  /** Occasions the garment suits, most probable first (cascade mode only). */
+  occasions?: string[];
+  /** Calibrated probability of fit per occasion (cascade mode only). */
+  occasion_scores?: Record<string, number>;
 }
 
 export type Gender = "male" | "female" | "unisex";

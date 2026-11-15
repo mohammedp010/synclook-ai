@@ -1,17 +1,8 @@
 """Unit tests for schemas."""
 
-from uuid import UUID
-
 import pytest
 
-from backend.schemas.api import (
-    FeedbackRequest,
-    FeedbackResponse,
-    FeedbackType,
-    HealthResponse,
-    Recommendation,
-    RecommendationItem,
-)
+from backend.schemas.api import HealthResponse
 from backend.schemas.clothing import (
     ClothingAttributes,
     ClothingType,
@@ -72,60 +63,7 @@ class TestClothingAttributes:
             assert p.value
 
 
-class TestRecommendation:
-    """Tests for Recommendation and RecommendationItem schemas."""
-
-    def test_recommendation_item(self) -> None:
-        item = RecommendationItem(
-            item_type="jeans",
-            color="black",
-            style="casual",
-            reason="Goes well with navy shirt",
-        )
-        assert item.item_type == "jeans"
-
-    def test_recommendation(self) -> None:
-        rec = Recommendation(
-            items=[
-                RecommendationItem(item_type="jeans", color="black", style="casual", reason="test"),
-            ],
-            overall_explanation="A great outfit",
-            style_tags=["casual"],
-            confidence=0.9,
-        )
-        assert len(rec.items) == 1
-        assert isinstance(rec.id, UUID)
-
-    def test_recommendation_json_roundtrip(self) -> None:
-        rec = Recommendation(
-            items=[
-                RecommendationItem(item_type="jeans", color="black", style="casual", reason="test"),
-            ],
-            overall_explanation="A great outfit",
-            style_tags=["casual"],
-        )
-        data = rec.model_dump(mode="json")
-        restored = Recommendation(**data)
-        assert restored.overall_explanation == rec.overall_explanation
-
-
-class TestFeedbackSchemas:
-    """Tests for feedback request/response schemas."""
-
-    def test_feedback_request(self) -> None:
-        req = FeedbackRequest(
-            request_id="12345678-1234-1234-1234-123456789012",
-            recommendation_id="12345678-1234-1234-1234-123456789012",
-            feedback=FeedbackType.LIKE,
-            user_id="user-1",
-        )
-        assert req.feedback == FeedbackType.LIKE
-
-    def test_feedback_response_defaults(self) -> None:
-        resp = FeedbackResponse()
-        assert resp.status == "ok"
-        assert resp.message == "Feedback recorded"
-
+class TestHealthSchema:
     def test_health_response(self) -> None:
         resp = HealthResponse(version="0.1.0")
         assert resp.status == "healthy"

@@ -1,0 +1,131 @@
+{
+  "writer_model": "google/gemini-2.5-flash-lite",
+  "judge_model": "openai/gpt-4o-mini",
+  "prompt_version": "outfits-v1",
+  "calibration": {
+    "passed": true,
+    "correct": 3,
+    "details": [
+      {
+        "name": "faithful_good",
+        "expected": true,
+        "got": true
+      },
+      {
+        "name": "unsupported_item_bad",
+        "expected": false,
+        "got": false
+      },
+      {
+        "name": "unsupported_benefit_bad",
+        "expected": false,
+        "got": false
+      }
+    ]
+  },
+  "summary": {
+    "outfits_judged": 38,
+    "model_written_rate": 1.0,
+    "explanation_faithfulness_rate": 0.8421,
+    "occasion_adherence_rate": 0.8684,
+    "paid_calls_this_run": 2
+  },
+  "violations": [
+    {
+      "occasion": "business_formal",
+      "text": "The cream blouse, beige trousers, and black blazer offer a sophisticated base, complemented by brown penny loafers and belt for a complete business-formal outfit.",
+      "why": [
+        "The cream blouse is smart-casual, not business-formal, which contradicts the claim of offering a sophisticated base for a business-formal outfit.",
+        "The explanation implies that the combination is entirely business-formal, which is not supported by the evidence that classifies the cream blouse and beige trousers as smart-casual."
+      ]
+    },
+    {
+      "occasion": "business_casual",
+      "text": "The khaki sweater and green skirt provide a comfortable yet smart-casual foundation, enhanced by black boots and a navy watch for business casual.",
+      "why": [
+        "The claim that the khaki sweater and green skirt provide a comfortable yet smart-casual foundation is unsupported; while they are described as smart-casual, the term 'comfortable' is not substantiated by the evidence.",
+        "The claim that the black boots enhance the outfit is unsupported; while they are described as smart-casual, the explanation does not clarify how they enhance the outfit beyond their pairing status."
+      ]
+    },
+    {
+      "occasion": "smart_casual",
+      "text": "A khaki sweater pairs well with a green skirt and black boots, creating a comfortable yet stylish smart-casual ensemble, finished with a navy watch.",
+      "why": [
+        "The claim that the ensemble is 'comfortable yet stylish' is unsupported by the evidence.",
+        "The phrase 'creating a comfortable yet stylish smart-casual ensemble' is unsupported by the evidence."
+      ]
+    },
+    {
+      "occasion": "festive_ethnic",
+      "text": "The blue business shirt and beige trousers offer a smart-casual base, enhanced by the brown coat, black boots, and navy watch for the occasion.",
+      "why": [
+        "The claim that the brown coat and black boots enhance the smart-casual base is unsupported; while they are both smart-casual, the explanation does not clarify how they enhance the outfit. The explanation implies a stronger relationship than the evidence supports."
+      ]
+    },
+    {
+      "occasion": "date_night",
+      "text": "The smart-casual cream blouse and brown trousers, paired with black boots and a navy watch, create a polished yet relaxed look perfect for date night.",
+      "why": [
+        "The claim that the outfit creates a 'polished yet relaxed look' is subjective and not directly supported by the evidence.",
+        "The phrase 'perfect for date night' is unsupported as it is a subjective interpretation of the outfit's appropriateness for the occasion."
+      ]
+    },
+    {
+      "occasion": "interview",
+      "text": "This outfit combines smart-casual and business-formal pieces, creating a well-coordinated and appropriate look for an interview.",
+      "why": [
+        "The outfit combines smart-casual and business-formal pieces, which is not supported by the evidence as the cream blouse and beige trousers are categorized as smart-casual, while the black blazer and brown penny loafers are business-formal."
+      ]
+    }
+  ],
+  "adherence_misses": [
+    {
+      "occasion": "business_formal",
+      "items": [
+        "olive dress",
+        "brown penny loafers",
+        "navy watch"
+      ],
+      "reasoning": "The olive dress may not align with traditional business formal attire, and the brown penny loafers could be too casual for the occasion."
+    },
+    {
+      "occasion": "cocktail_semi_formal",
+      "items": [
+        "burgundy lehenga",
+        "black loafers",
+        "navy watch"
+      ],
+      "reasoning": "The burgundy lehenga is suitable for a semi-formal cocktail event, but black loafers do not complement the traditional attire, making the outfit mismatched."
+    },
+    {
+      "occasion": "wedding_guest",
+      "items": [
+        "burgundy lehenga",
+        "black loafers",
+        "navy watch"
+      ],
+      "reasoning": "The black loafers do not match the formal nature of a wedding guest outfit, which typically requires more elegant footwear."
+    },
+    {
+      "occasion": "festive_ethnic",
+      "items": [
+        "cream blouse",
+        "brown trousers",
+        "black boots",
+        "navy watch"
+      ],
+      "reasoning": "The outfit lacks traditional ethnic elements and colors typically associated with festive occasions."
+    },
+    {
+      "occasion": "festive_ethnic",
+      "items": [
+        "blue business shirt",
+        "beige trousers",
+        "brown coat",
+        "black boots",
+        "navy watch"
+      ],
+      "reasoning": "The recommended items are more suited for a formal or business setting rather than a festive ethnic occasion, which typically calls for vibrant colors and traditional patterns."
+    }
+  ]
+}

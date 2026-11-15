@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from backend.schemas.taxonomy import Aesthetic, ColorName, Formality, Occasion
+
 
 class ClothingType(str, Enum):
     TSHIRT = "t-shirt"
@@ -85,4 +87,39 @@ class ClothingAttributes(BaseModel):
     description_relevant: bool = Field(
         default=True,
         description="Whether caption appears relevant to the detected clothing item.",
+    )
+    # Pixel-derived colour detail (Phase 1). ``primary_color`` stays the coarse
+    # live enum the styling rules key on; these carry what the pixels add.
+    color_name: ColorName | None = Field(
+        default=None, description="Fine colour name (e.g. charcoal vs grey) from the target taxonomy"
+    )
+    primary_hex: str | None = Field(default=None, description="Measured hex of the primary colour")
+    secondary_hex: str | None = Field(default=None, description="Measured hex of the secondary colour")
+    # Fine garment type from the full-taxonomy head — a GarmentType or
+    # AccessoryType value ("denim_jacket", "loafers", "belt"). clothing_type
+    # stays the coarse enum the style rules key on.
+    garment_type: str | None = Field(default=None, description="Fine garment or accessory type")
+    garment_type_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    # Judged from the VLM description (perception_mode="cascade" with a VLM).
+    # Separate from ``style`` on purpose: Style mixes register and aesthetic on
+    # one axis, and re-mapping it would change styling rules no eval covers yet.
+    formality: Formality | None = Field(default=None, description="0 lounge … 4 black tie")
+    aesthetic: Aesthetic | None = Field(
+        default=None, description="Visual register, e.g. minimalist, ethnic_traditional"
+    )
+    # Upload guard verdict for photos that were allowed through ("pass" or
+    # "degrade"); "retake" and "reject" never get this far — they are a 422.
+    guard: str = Field(default="pass", description="pass | degrade")
+    guard_reason: str = Field(default="ok", description="e.g. ok, uncertain_subject, multiple_garments")
+    guard_message: str = Field(default="", description="A note for the user when guard is 'degrade'")
+    other_garments: list[str] = Field(
+        default_factory=list, description="Other items visible in the photo, as the VLM named them"
+    )
+    # Occasion fit from the Jev judge (perception_mode="cascade"). Empty on the
+    # CLIP path or when Jev is unavailable — never a guess.
+    occasions: list[Occasion] = Field(
+        default_factory=list, description="Occasions this garment suits, most probable first"
+    )
+    occasion_scores: dict[Occasion, float] = Field(
+        default_factory=dict, description="Calibrated probability of fit for every occasion"
     )

@@ -10,40 +10,6 @@ class TestColorMatcherTool:
     def setup_method(self) -> None:
         self.tool = ColorMatcherTool()
 
-    # ── get_complements ──────────────────────────────────────────────
-
-    def test_get_complements_returns_list(self) -> None:
-        result = self.tool.get_complements(Color.NAVY)
-        assert isinstance(result, list)
-        assert len(result) > 0
-
-    def test_get_complements_matches_table(self) -> None:
-        for color in Color:
-            complements = self.tool.get_complements(color)
-            expected = COLOR_COMPLEMENTS.get(color, [Color.WHITE, Color.BLACK])
-            assert complements == expected
-
-    def test_get_complements_limit(self) -> None:
-        result = self.tool.get_complements(Color.NAVY, limit=2)
-        assert len(result) == 2
-        assert result == COLOR_COMPLEMENTS[Color.NAVY][:2]
-
-    def test_get_complements_limit_larger_than_list(self) -> None:
-        result = self.tool.get_complements(Color.OTHER, limit=100)
-        assert result == COLOR_COMPLEMENTS[Color.OTHER]
-
-    # ── is_compatible ────────────────────────────────────────────────
-
-    def test_same_color_is_compatible(self) -> None:
-        assert self.tool.is_compatible(Color.NAVY, Color.NAVY)
-
-    def test_complement_pair_is_compatible(self) -> None:
-        assert self.tool.is_compatible(Color.NAVY, Color.WHITE)
-
-    def test_non_complement_is_not_compatible(self) -> None:
-        # Red is not in navy's complement list
-        assert not self.tool.is_compatible(Color.NAVY, Color.RED)
-
     # ── score_pair ───────────────────────────────────────────────────
 
     def test_same_color_score(self) -> None:
@@ -81,14 +47,3 @@ class TestColorMatcherTool:
             for candidate in Color:
                 score = self.tool.score_pair(base, candidate)
                 assert 0.0 <= score <= 1.0
-
-    # ── best_color_for ───────────────────────────────────────────────
-
-    def test_best_color_for_returns_first_complement(self) -> None:
-        best = self.tool.best_color_for(Color.NAVY)
-        assert best == COLOR_COMPLEMENTS[Color.NAVY][0]
-
-    def test_best_color_for_all_colors(self) -> None:
-        for color in Color:
-            result = self.tool.best_color_for(color)
-            assert isinstance(result, Color)

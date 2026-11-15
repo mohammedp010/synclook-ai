@@ -44,20 +44,6 @@ class ColorMatcherTool:
     and color-pair scoring.  Designed to be called by agents.
     """
 
-    def get_complements(self, color: Color, *, limit: int | None = None) -> list[Color]:
-        """Return complementary colors for *color*, ordered best-first."""
-        complements = COLOR_COMPLEMENTS.get(color, [Color.WHITE, Color.BLACK])
-        if limit is not None:
-            return complements[:limit]
-        return list(complements)
-
-    def is_compatible(self, color_a: Color, color_b: Color) -> bool:
-        """Check whether two colors pair well together."""
-        if color_a == color_b:
-            return True
-        complements_a = COLOR_COMPLEMENTS.get(color_a, [])
-        return color_b in complements_a
-
     def score_pair(self, base_color: Color, candidate_color: Color) -> float:
         """Score 0-1 for how well *candidate_color* pairs with *base_color*.
 
@@ -80,8 +66,3 @@ class ColorMatcherTool:
             return 0.4
 
         return 0.2  # poor match
-
-    def best_color_for(self, base_color: Color) -> Color:
-        """Return the single best complementary color for *base_color*."""
-        complements = self.get_complements(base_color, limit=1)
-        return complements[0] if complements else Color.WHITE
